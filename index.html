@@ -1416,97 +1416,37 @@ document.addEventListener("DOMContentLoaded", function() {
   webgazer.showFaceFeedbackBox(true);
 
 });
-</script>
-<!-- ================= CALIBRATION SCREEN ================= -->
 
-<div id="calibration-container">
-  <div id="instruction">
-    <h2>Инструкция</h2>
-    <p>
-      Пожалуйста, сядьте прямо перед экраном. 
-      Убедитесь, что лицо хорошо освещено.
-      Сейчас нужно будет нажимать на появляющиеся точки.
-      Смотрите прямо на точку и нажмите на неё 5 раз.
-    </p>
-    <button id="start-calibration">Начать калибровку</button>
-  </div>
+<!-- Кнопки управления -->
+<div style="position: fixed; top: 20px; left: 20px; z-index: 9999;">
+    <button id="start-btn" onclick="initWebGazer()" 
+            style="padding: 12px 20px; background: #667eea; color: white; 
+                   border: none; border-radius: 8px; cursor: pointer;">
+        🎥 Запустить WebGazer
+    </button>
+    
+    <button id="stop-btn" onclick="stopWebGazer()" 
+            style="padding: 12px 20px; background: #f5576c; color: white; 
+                   border: none; border-radius: 8px; cursor: pointer; display: none;">
+        ⏹️ Остановить
+    </button>
+    
+    <button id="calibrate-btn" onclick="startCalibration()" 
+            style="padding: 12px 20px; background: #00f2fe; color: white; 
+                   border: none; border-radius: 8px; cursor: pointer; display: none;">
+        🎯 Калибровка
+    </button>
 </div>
-<script>
+ 
+<!-- В КОНЦЕ body, ПЕРЕД </body> -->
 
-document.addEventListener("DOMContentLoaded", function() {
+<!-- 1. Сначала WebGazer -->
+<script src="webgazer.js"></script>
 
-  // Запуск WebGazer
-  webgazer.setGazeListener(function(data, timestamp) {
-    if (data) {
-      console.log(data.x, data.y);
-    }
-  }).begin();
+<!-- 2. Потом наш скрипт инициализации -->
+<script src="js/webgazer-init.js"></script>
 
-  webgazer.showVideo(true);
-  webgazer.showFaceOverlay(true);
-  webgazer.showFaceFeedbackBox(true);
-
-  const startButton = document.getElementById("start-calibration");
-  const container = document.getElementById("calibration-container");
-
-  const points = [
-    [10, 10], [50, 10], [90, 10],
-    [10, 50], [50, 50], [90, 50],
-    [10, 90], [50, 90], [90, 90]
-  ];
-
-  let currentPoint = 0;
-  let clickCount = 0;
-
-  startButton.addEventListener("click", () => {
-    document.getElementById("instruction").style.display = "none";
-    showNextPoint();
-  });
-
-  function showNextPoint() {
-
-    if (currentPoint >= points.length) {
-      finishCalibration();
-      return;
-    }
-
-    const [xPercent, yPercent] = points[currentPoint];
-
-    const point = document.createElement("div");
-    point.className = "calibration-point";
-    point.style.left = xPercent + "%";
-    point.style.top = yPercent + "%";
-    point.style.transform = "translate(-50%, -50%)";
-
-    point.addEventListener("click", () => {
-      clickCount++;
-      point.style.background = "green";
-
-      if (clickCount >= 5) {
-        point.remove();
-        clickCount = 0;
-        currentPoint++;
-        showNextPoint();
-      }
-    });
-
-    document.body.appendChild(point);
-  }
-
-  function finishCalibration() {
-    alert("Калибровка завершена!");
-    container.style.display = "none";
-
-    // Выключаем визуализацию камеры перед экспериментом
-    webgazer.showVideo(false);
-    webgazer.showFaceOverlay(false);
-    webgazer.showFaceFeedbackBox(false);
-
-    // Здесь можно вызвать функцию запуска магазина
-    console.log("Эксперимент начинается");
-  }
-
-});
+</body>
 
 </script>
     <script src="js/jquery-1.11.0.min.js"></script>
@@ -1516,3 +1456,4 @@ document.addEventListener("DOMContentLoaded", function() {
   </body>
 
 </html>
+
