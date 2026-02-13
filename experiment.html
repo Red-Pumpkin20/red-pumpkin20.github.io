@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <title>ShopLite - Simple eCommerce Website Template</title>
@@ -18,18 +18,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
   </head>
   <body>
-   <!-- ВСТАВЬТЕ ЭТОТ КОД СЮДА -->
-    <div style="position: fixed; top: 20px; left: 20px; z-index: 9999; display: flex; gap: 10px;">
-        <button id="start-btn" onclick="initWebGazer()" style="padding: 12px 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
-            🎥 Запустить WebGazer
-        </button>
-        <button id="stop-btn" onclick="stopWebGazer()" style="padding: 12px 20px; background: linear-gradient(135deg, #f093fb, #f5576c); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: none;">
-            ⏹️ Остановить
-        </button>
-        <button id="calibrate-btn" onclick="startCalibration()" style="padding: 12px 20px; background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: none;">
-            🎯 Калибровка
-        </button>
-    </div>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
       <symbol id="search" xmlns="http://www.w3.org/2000/symbolsvg" viewBox="0 0 24 24">
         <path fill="currentColor" fill-rule="evenodd" d="M11.5 2.75a8.75 8.75 0 1 0 0 17.5a8.75 8.75 0 0 0 0-17.5M1.25 11.5c0-5.66 4.59-10.25 10.25-10.25S21.75 5.84 21.75 11.5c0 2.56-.939 4.902-2.491 6.698l3.271 3.272a.75.75 0 1 1-1.06 1.06l-3.272-3.271A10.21 10.21 0 0 1 11.5 21.75c-5.66 0-10.25-4.59-10.25-10.25" clip-rule="evenodd" />
@@ -1404,30 +1392,85 @@
    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="webgazer.js"></script>
 
 <script>
+// Автоматический запуск WebGazer на странице эксперимента
 document.addEventListener("DOMContentLoaded", function() {
+  
+  // Проверяем что калибровка была пройдена
+  const calibrationComplete = sessionStorage.getItem('calibrationComplete');
+  
+  if (!calibrationComplete) {
+    // Если калибровка не пройдена - возвращаем на страницу инструкции
+    alert('Сначала пройдите калибровку!');
+    window.location.href = 'intro.html';
+    return;
+  }
 
   if (!window.webgazer) {
     console.error("WebGazer не загрузился");
     return;
   }
 
+  console.log('🎯 Запуск WebGazer на странице эксперимента...');
+
+  // Массив для сбора данных о взгляде
+  window.gazeDataPoints = [];
+
   webgazer
     .setGazeListener(function(data, timestamp) {
       if (data) {
-        console.log(
-          "X:", Math.round(data.x),
-          "Y:", Math.round(data.y),
-          "Time:", timestamp
-        );
+        // Сохраняем данные о взгляде
+        window.gazeDataPoints.push({
+          x: Math.round(data.x),
+          y: Math.round(data.y),
+          time: timestamp,
+          url: window.location.href
+        });
+        
+        // Логируем каждую 100-ю точку
+        if (window.gazeDataPoints.length % 100 === 0) {
+          console.log('📊 Собрано точек взгляда:', window.gazeDataPoints.length);
+        }
       }
     })
     .begin();
 
-  webgazer.showVideo(true);
-  webgazer.showFaceOverlay(true);
-  webgazer.showFaceFeedbackBox(true);
+  // Настройки WebGazer
+  webgazer.showVideoPreview(false)      // Скрываем видео на странице эксперимента
+          .showPredictionPoints(false)  // Скрываем точки предсказания
+          .applyKalmanFilter(true);     // Применяем сглаживание
+
+  console.log('✅ WebGazer запущен. Идёт сбор данных о взгляде.');
+  console.log('💡 Данные сохраняются в window.gazeDataPoints');
+  console.log('💡 Для экспорта данных используйте: exportGazeData()');
 
 });
+
+// Функция экспорта данных о взгляде
+function exportGazeData() {
+  if (!window.gazeDataPoints || window.gazeDataPoints.length === 0) {
+    console.warn('Нет данных для экспорта');
+    return;
+  }
+
+  const json = JSON.stringify(window.gazeDataPoints, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'gaze_data_' + Date.now() + '.json';
+  a.click();
+  
+  console.log('✅ Экспортировано точек:', window.gazeDataPoints.length);
+}
+
+// Остановка WebGazer при закрытии страницы
+window.addEventListener('beforeunload', function() {
+  if (webgazer) {
+    console.log('📊 Финальное количество точек:', window.gazeDataPoints.length);
+    webgazer.end();
+  }
+});
+</script>
  
 <!-- В КОНЦЕ body, ПЕРЕД </body> -->
 
@@ -1438,7 +1481,5 @@ document.addEventListener("DOMContentLoaded", function() {
 <script src="js/webgazer-init.js"></script>
 
 </body>
-
-</script>
     <script src="js/jquery-1.11.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1e
