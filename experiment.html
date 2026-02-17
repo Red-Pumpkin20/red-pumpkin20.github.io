@@ -369,7 +369,7 @@
                       </ul>
                       <div class="d-flex flex-wrap justify-content-center">
                         <a href="cart.html" class="w-100 btn btn-dark mb-1" type="submit">View Cart</a>
-                        <a href="checkout.html" class="w-100 btn btn-primary" type="submit">Go to checkout</a>
+                        <button onclick="finishExperiment()" class="w-100 btn btn-primary">Go to checkout</button>
                       </div>
                     </div>
                   </li>
@@ -1390,16 +1390,19 @@
    <script src="webgazer.js"></script>
 
    <script>
-    // ═══════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════
     // ВСТАВЬТЕ ВАШ URL ОТ GOOGLE APPS SCRIPT НИЖЕ
-    // ═══════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ8rnkTFBdtcgMAQ26_f3md274MEzeSPejab4jHR5PbQfzSGXDoTWDmkx_SBb_nngctw/exec';
-    const SAMPLE_RATE_MS    = 100;  // точка каждые 100 мс = ~10 точек/сек
-    // ═══════════════════════════════════════════════════
+
+    // ВСТАВЬТЕ ССЫЛКУ НА ВАШУ GOOGLE ФОРМУ НИЖЕ
+    const GOOGLE_FORM_URL   = 'https://docs.google.com/forms/d/e/1FAIpQLScQc-05j6Vq_zWYLDcacCcmI2lQivReMSbXd5N-TdgU90IuNw/viewform?usp=dialog';
+    // ═══════════════════════════════════════════════════════════
+
+    const SAMPLE_RATE_MS = 100; // точка каждые 100 мс ≈ 10 точек/сек
 
     document.addEventListener('DOMContentLoaded', function () {
 
-      // Проверяем что калибровка пройдена
       if (!sessionStorage.getItem('calibrationComplete')) {
         alert('Сначала пройдите калибровку!');
         window.location.href = 'intro.html';
@@ -1411,31 +1414,27 @@
         return;
       }
 
-      // Уникальный ID участника + время старта
-      const participantId = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-      const sessionStart  = Date.now();
-      let   lastSample    = 0;
-      let   gazePoints    = [];
-      let   dataSent      = false;
+      // Уникальный ID участника
+      window._participantId  = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      window._sessionStart   = Date.now();
+      window._gazePoints     = [];
+      let lastSample         = 0;
 
-      console.log('🎯 WebGazer запущен. ID участника:', participantId);
+      console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
-      // ── Запуск WebGazer ──────────────────────────────
       webgazer
-        .setGazeListener(function (data, timestamp) {
+        .setGazeListener(function (data) {
           if (!data) return;
           const now = Date.now();
           if (now - lastSample < SAMPLE_RATE_MS) return;
           lastSample = now;
-
-          gazePoints.push({
+          window._gazePoints.push({
             x: Math.round(data.x),
             y: Math.round(data.y),
-            t: now - sessionStart   // мс от начала сессии
+            t: now - window._sessionStart
           });
-
-          if (gazePoints.length % 100 === 0)
-            console.log('📊 Точек собрано:', gazePoints.length);
+          if (window._gazePoints.length % 100 === 0)
+            console.log('📊 Точек собрано:', window._gazePoints.length);
         })
         .begin();
 
@@ -1445,51 +1444,70 @@
         .showFaceFeedbackBox(false)
         .showPredictionPoints(false)
         .applyKalmanFilter(true);
+    });
 
-      // ── Отправка данных ───────────────────────────────
-      // Google Apps Script читает поля через e.parameter (form-encoded),
-      // поэтому отправляем FormData, а не JSON blob.
-      // CORS ошибка в консоли — это нормально: браузер не может прочитать
-      // ответ от Google, но ЗАПИСЬ В ТАБЛИЦУ всё равно происходит.
-      function sendToGoogleSheets() {
-        if (dataSent || gazePoints.length === 0) return;
-        dataSent = true;
+    // ── Вызывается при нажатии "Go to checkout" ───────────────
+    function finishExperiment() {
+      const btn = event.currentTarget;
+      btn.disabled  = true;
+      btn.textContent = 'Отправка данных...';
 
-        const form = new FormData();
-        form.append('participant_id', participantId);
-        form.append('date',           new Date(sessionStart).toLocaleString('ru-RU'));
-        form.append('duration_sec',   Math.round((Date.now() - sessionStart) / 1000));
-        form.append('points_count',   gazePoints.length);
+      const gazePoints   = window._gazePoints   || [];
+      const sessionStart = window._sessionStart || Date.now();
+      const participantId = window._participantId || 'unknown';
+
+      console.log('🏁 Эксперимент завершён. Точек: ' + gazePoints.length);
+
+      if (gazePoints.length === 0) {
+        // Данных нет — просто переходим на форму
+        window.location.href = GOOGLE_FORM_URL;
+        return;
+      }
+
+      const form = new FormData();
+      form.append('participant_id', participantId);
+      form.append('date',           new Date(sessionStart).toLocaleString('ru-RU'));
+      form.append('duration_sec',   Math.round((Date.now() - sessionStart) / 1000));
+      form.append('points_count',   gazePoints.length);
+      form.append('screen_w',       window.screen.width);
+      form.append('screen_h',       window.screen.height);
+      form.append('user_agent',     navigator.userAgent);
+      form.append('gaze_data',      JSON.stringify(gazePoints));
+      form.append('send_reason',    'checkout');
+
+      // Отправляем данные, потом переходим на форму
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode:   'no-cors',  // CORS ошибка в консоли — нормально, данные дойдут
+        body:   form
+      })
+      .then(function () {
+        console.log('✅ Данные отправлены. Переход на Google Forms...');
+        window.location.href = GOOGLE_FORM_URL;
+      })
+      .catch(function (err) {
+        console.warn('⚠️ fetch не сработал, пробуем sendBeacon:', err);
+        navigator.sendBeacon(GOOGLE_SCRIPT_URL, form);
+        window.location.href = GOOGLE_FORM_URL;
+      });
+    }
+   </script>
         form.append('screen_w',       window.screen.width);
         form.append('screen_h',       window.screen.height);
         form.append('user_agent',     navigator.userAgent);
         form.append('gaze_data',      JSON.stringify(gazePoints));
-
-        // sendBeacon — работает даже при закрытии вкладки
-        const sent = navigator.sendBeacon(GOOGLE_SCRIPT_URL, form);
-        console.log(sent
-          ? '✅ sendBeacon отправлен. Точек: ' + gazePoints.length
-          : '⚠️ sendBeacon недоступен, fallback на fetch...'
-        );
-
-        // Резервный fetch
-        if (!sent) {
-          fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: form });
-          console.log('📤 fetch (no-cors) отправлен');
-        }
+        form.append('send_reason',    'exit');
+        navigator.sendBeacon(GOOGLE_SCRIPT_URL, form);
+        console.log('📤 sendBeacon при выходе. Точек: ' + gazePoints.length);
       }
 
-      // Три события — максимальная надёжность
-      window.addEventListener('visibilitychange', function () {
-        if (document.visibilityState === 'hidden') sendToGoogleSheets();
+      window.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') sendOnExit();
       });
-      window.addEventListener('pagehide',     sendToGoogleSheets);
-      window.addEventListener('beforeunload', sendToGoogleSheets);
+      window.addEventListener('pagehide',     sendOnExit);
+      window.addEventListener('beforeunload', sendOnExit);
     });
    </script>
-   
-   <script src="js/jquery-1.11.0.min.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
    <script src="js/plugins.js"></script>
    <script src="js/script.js"></script>
