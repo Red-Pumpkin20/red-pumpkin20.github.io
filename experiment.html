@@ -1388,15 +1388,19 @@
         </div>
     
    <script src="webgazer.js"></script>
-   
+
    <script>
-    // АВТОМАТИЧЕСКИЙ ЗАПУСК WEBGAZER НА СТРАНИЦЕ ЭКСПЕРИМЕНТА
+    // ═══════════════════════════════════════════════════════════
+    // НАСТРОЙКИ — вставьте ваш URL от Google Apps Script
+    // ═══════════════════════════════════════════════════════════
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz628LCVmUAdGh_4yMxmzi0A6iyg_MfksU-2zFsUtr5TXFw7K8NaU8_wvfB_lY8Nu9WiA/exec';
+    const SAMPLE_RATE_MS    = 100;   // одна точка каждые 100мс (≈10 точек/сек)
+    // ═══════════════════════════════════════════════════════════
+
     document.addEventListener("DOMContentLoaded", function() {
-      
-      // Проверка калибровки
-      const calibrationComplete = sessionStorage.getItem('calibrationComplete');
-      
-      if (!calibrationComplete) {
+
+      // Проверяем что калибровка пройдена
+      if (!sessionStorage.getItem('calibrationComplete')) {
         alert('Сначала пройдите калибровку!');
         window.location.href = 'intro.html';
         return;
@@ -1407,66 +1411,84 @@
         return;
       }
 
-      console.log('🎯 Запуск WebGazer на странице эксперимента...');
+      // ── Идентификатор участника и время старта ───────────────
+      const participantId = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      const sessionStart  = Date.now();
+      let   lastSample    = 0;
+      let   gazePoints    = [];   // { x, y, t } — t в мс от старта сессии
+      let   dataSent      = false;
 
-      // Массив для сбора данных
-      window.gazeDataPoints = [];
+      console.log('🎯 WebGazer запущен. Участник:', participantId);
 
+      // ── Запуск WebGazer ──────────────────────────────────────
       webgazer
         .setGazeListener(function(data, timestamp) {
-          if (data) {
-            // Сохраняем данные
-            window.gazeDataPoints.push({
-              x: Math.round(data.x),
-              y: Math.round(data.y),
-              time: timestamp,
-              url: window.location.href
-            });
-            
-            // Логируем каждую 100-ю точку
-            if (window.gazeDataPoints.length % 100 === 0) {
-              console.log('📊 Собрано точек взгляда:', window.gazeDataPoints.length);
-            }
+          if (!data) return;
+
+          const now = Date.now();
+          if (now - lastSample < SAMPLE_RATE_MS) return;
+          lastSample = now;
+
+          gazePoints.push({
+            x: Math.round(data.x),
+            y: Math.round(data.y),
+            t: now - sessionStart   // мс от начала сессии — удобно для анализа
+          });
+
+          if (gazePoints.length % 100 === 0) {
+            console.log('📊 Точек собрано:', gazePoints.length);
           }
         })
         .begin();
 
-      // Настройки: СКРЫТЬ видео и точки
-      webgazer.showVideoPreview(false)
-              .showPredictionPoints(false)
-              .applyKalmanFilter(true);
+      webgazer
+        .showVideoPreview(false)
+        .showFaceOverlay(false)
+        .showFaceFeedbackBox(false)
+        .showPredictionPoints(false)
+        .applyKalmanFilter(true);
 
-      console.log('✅ WebGazer запущен. Идёт сбор данных о взгляде.');
-      console.log('💡 Данные: window.gazeDataPoints');
-      console.log('💡 Экспорт: exportGazeData()');
-    });
+      // ── Отправка данных ──────────────────────────────────────
+      function sendToGoogleSheets() {
+        if (dataSent || gazePoints.length === 0) return;
+        dataSent = true;
 
-    // Функция экспорта данных
-    function exportGazeData() {
-      if (!window.gazeDataPoints || window.gazeDataPoints.length === 0) {
-        console.warn('Нет данных для экспорта');
-        alert('Нет данных для экспорта');
-        return;
+        const payload = {
+          participant_id:  participantId,
+          date:            new Date(sessionStart).toLocaleString('ru-RU'),
+          duration_sec:    Math.round((Date.now() - sessionStart) / 1000),
+          points_count:    gazePoints.length,
+          screen_w:        window.screen.width,
+          screen_h:        window.screen.height,
+          user_agent:      navigator.userAgent,
+          gaze_data:       gazePoints  // полный массив координат
+        };
+
+        // sendBeacon — надёжно работает даже при закрытии вкладки
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        const sent = navigator.sendBeacon(GOOGLE_SCRIPT_URL, blob);
+
+        console.log(sent
+          ? '✅ Данные отправлены в Google Sheets. Точек: ' + gazePoints.length
+          : '⚠️ sendBeacon не сработал, пробуем fetch...'
+        );
+
+        // Резервный вариант через fetch (если sendBeacon не поддерживается)
+        if (!sent) {
+          fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode:   'no-cors',
+            body:   JSON.stringify(payload)
+          }).then(() => console.log('✅ Данные отправлены через fetch'));
+        }
       }
 
-      const json = JSON.stringify(window.gazeDataPoints, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'gaze_data_' + Date.now() + '.json';
-      a.click();
-      
-      console.log('✅ Экспортировано точек:', window.gazeDataPoints.length);
-      alert('Данные экспортированы! Проверьте папку "Загрузки"');
-    }
-
-    // Остановка при закрытии
-    window.addEventListener('beforeunload', function() {
-      if (window.webgazer) {
-        console.log('📊 Финальное количество точек:', window.gazeDataPoints.length);
-        webgazer.end();
-      }
+      // Отправляем при уходе со страницы (закрытие, переход, обновление)
+      window.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') sendToGoogleSheets();
+      });
+      window.addEventListener('pagehide',      sendToGoogleSheets);
+      window.addEventListener('beforeunload',  sendToGoogleSheets);
     });
    </script>
    
