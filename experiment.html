@@ -1390,14 +1390,14 @@
    <script src="webgazer.js"></script>
 
    <script>
-    // ═══════════════════════════════════════════════════════════
-    // НАСТРОЙКИ — вставьте ваш URL от Google Apps Script
-    // ═══════════════════════════════════════════════════════════
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz628LCVmUAdGh_4yMxmzi0A6iyg_MfksU-2zFsUtr5TXFw7K8NaU8_wvfB_lY8Nu9WiA/exec';
-    const SAMPLE_RATE_MS    = 100;   // одна точка каждые 100мс (≈10 точек/сек)
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════
+    // ВСТАВЬТЕ ВАШ URL ОТ GOOGLE APPS SCRIPT НИЖЕ
+    // ═══════════════════════════════════════════════════
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ8rnkTFBdtcgMAQ26_f3md274MEzeSPejab4jHR5PbQfzSGXDoTWDmkx_SBb_nngctw/exec';
+    const SAMPLE_RATE_MS    = 100;  // точка каждые 100 мс = ~10 точек/сек
+    // ═══════════════════════════════════════════════════
 
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener('DOMContentLoaded', function () {
 
       // Проверяем что калибровка пройдена
       if (!sessionStorage.getItem('calibrationComplete')) {
@@ -1407,24 +1407,23 @@
       }
 
       if (!window.webgazer) {
-        console.error("❌ WebGazer не загрузился");
+        console.error('❌ WebGazer не загрузился');
         return;
       }
 
-      // ── Идентификатор участника и время старта ───────────────
+      // Уникальный ID участника + время старта
       const participantId = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       const sessionStart  = Date.now();
       let   lastSample    = 0;
-      let   gazePoints    = [];   // { x, y, t } — t в мс от старта сессии
+      let   gazePoints    = [];
       let   dataSent      = false;
 
-      console.log('🎯 WebGazer запущен. Участник:', participantId);
+      console.log('🎯 WebGazer запущен. ID участника:', participantId);
 
-      // ── Запуск WebGazer ──────────────────────────────────────
+      // ── Запуск WebGazer ──────────────────────────────
       webgazer
-        .setGazeListener(function(data, timestamp) {
+        .setGazeListener(function (data, timestamp) {
           if (!data) return;
-
           const now = Date.now();
           if (now - lastSample < SAMPLE_RATE_MS) return;
           lastSample = now;
@@ -1432,12 +1431,11 @@
           gazePoints.push({
             x: Math.round(data.x),
             y: Math.round(data.y),
-            t: now - sessionStart   // мс от начала сессии — удобно для анализа
+            t: now - sessionStart   // мс от начала сессии
           });
 
-          if (gazePoints.length % 100 === 0) {
+          if (gazePoints.length % 100 === 0)
             console.log('📊 Точек собрано:', gazePoints.length);
-          }
         })
         .begin();
 
@@ -1448,47 +1446,45 @@
         .showPredictionPoints(false)
         .applyKalmanFilter(true);
 
-      // ── Отправка данных ──────────────────────────────────────
+      // ── Отправка данных ───────────────────────────────
+      // Google Apps Script читает поля через e.parameter (form-encoded),
+      // поэтому отправляем FormData, а не JSON blob.
+      // CORS ошибка в консоли — это нормально: браузер не может прочитать
+      // ответ от Google, но ЗАПИСЬ В ТАБЛИЦУ всё равно происходит.
       function sendToGoogleSheets() {
         if (dataSent || gazePoints.length === 0) return;
         dataSent = true;
 
-        const payload = {
-          participant_id:  participantId,
-          date:            new Date(sessionStart).toLocaleString('ru-RU'),
-          duration_sec:    Math.round((Date.now() - sessionStart) / 1000),
-          points_count:    gazePoints.length,
-          screen_w:        window.screen.width,
-          screen_h:        window.screen.height,
-          user_agent:      navigator.userAgent,
-          gaze_data:       gazePoints  // полный массив координат
-        };
+        const form = new FormData();
+        form.append('participant_id', participantId);
+        form.append('date',           new Date(sessionStart).toLocaleString('ru-RU'));
+        form.append('duration_sec',   Math.round((Date.now() - sessionStart) / 1000));
+        form.append('points_count',   gazePoints.length);
+        form.append('screen_w',       window.screen.width);
+        form.append('screen_h',       window.screen.height);
+        form.append('user_agent',     navigator.userAgent);
+        form.append('gaze_data',      JSON.stringify(gazePoints));
 
-        // sendBeacon — надёжно работает даже при закрытии вкладки
-        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        const sent = navigator.sendBeacon(GOOGLE_SCRIPT_URL, blob);
-
+        // sendBeacon — работает даже при закрытии вкладки
+        const sent = navigator.sendBeacon(GOOGLE_SCRIPT_URL, form);
         console.log(sent
-          ? '✅ Данные отправлены в Google Sheets. Точек: ' + gazePoints.length
-          : '⚠️ sendBeacon не сработал, пробуем fetch...'
+          ? '✅ sendBeacon отправлен. Точек: ' + gazePoints.length
+          : '⚠️ sendBeacon недоступен, fallback на fetch...'
         );
 
-        // Резервный вариант через fetch (если sendBeacon не поддерживается)
+        // Резервный fetch
         if (!sent) {
-          fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode:   'no-cors',
-            body:   JSON.stringify(payload)
-          }).then(() => console.log('✅ Данные отправлены через fetch'));
+          fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: form });
+          console.log('📤 fetch (no-cors) отправлен');
         }
       }
 
-      // Отправляем при уходе со страницы (закрытие, переход, обновление)
-      window.addEventListener('visibilitychange', function() {
+      // Три события — максимальная надёжность
+      window.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'hidden') sendToGoogleSheets();
       });
-      window.addEventListener('pagehide',      sendToGoogleSheets);
-      window.addEventListener('beforeunload',  sendToGoogleSheets);
+      window.addEventListener('pagehide',     sendToGoogleSheets);
+      window.addEventListener('beforeunload', sendToGoogleSheets);
     });
    </script>
    
