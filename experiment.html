@@ -1511,21 +1511,19 @@
       }, 1000);
     }
    </script>
-        form.append('screen_w',       window.screen.width);
+      form.append('screen_w',       window.screen.width);
         form.append('screen_h',       window.screen.height);
         form.append('user_agent',     navigator.userAgent);
         form.append('gaze_data',      JSON.stringify(gazePoints));
         form.append('send_reason',    'exit');
         navigator.sendBeacon(GOOGLE_SCRIPT_URL, form);
         console.log('📤 sendBeacon при выходе. Точек: ' + gazePoints.length);
-      }
 
       window.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'hidden') sendOnExit();
       });
       window.addEventListener('pagehide',     sendOnExit);
       window.addEventListener('beforeunload', sendOnExit);
-    });
    </script>
 
    <!-- jQuery ПЕРВЫМ — все остальные скрипты зависят от него -->
