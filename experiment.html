@@ -1393,10 +1393,10 @@
     // ═══════════════════════════════════════════════════════════
     // ВСТАВЬТЕ ВАШ URL ОТ GOOGLE APPS SCRIPT НИЖЕ
     // ═══════════════════════════════════════════════════════════
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-njrQegCh7V8e32wl6KR91qfPUtZ4fxkBwDvi_n3LKp7tpzlrl_fzotzNz-XaKJ_f1A/exec';
+    const GOOGLE_SCRIPT_URL = 'ВСТАВЬТЕ_ВАШ_URL_СЮДА';
 
     // ВСТАВЬТЕ ССЫЛКУ НА ВАШУ GOOGLE ФОРМУ НИЖЕ
-    const GOOGLE_FORM_URL   = 'https://docs.google.com/forms/d/e/1FAIpQLScQc-05j6Vq_zWYLDcacCcmI2lQivReMSbXd5N-TdgU90IuNw/viewform?usp=dialog';
+    const GOOGLE_FORM_URL   = 'ВСТАВЬТЕ_ССЫЛКУ_НА_ФОРМУ_СЮДА';
     // ═══════════════════════════════════════════════════════════
 
     const SAMPLE_RATE_MS = 100; // точка каждые 100 мс ≈ 10 точек/сек
@@ -1449,47 +1449,66 @@
     // ── Вызывается при нажатии "Go to checkout" ───────────────
     function finishExperiment() {
       const btn = event.currentTarget;
-      btn.disabled  = true;
+      btn.disabled = true;
       btn.textContent = 'Отправка данных...';
 
-      const gazePoints   = window._gazePoints   || [];
+      const gazePoints = window._gazePoints || [];
       const sessionStart = window._sessionStart || Date.now();
       const participantId = window._participantId || 'unknown';
 
       console.log('🏁 Эксперимент завершён. Точек: ' + gazePoints.length);
 
       if (gazePoints.length === 0) {
-        // Данных нет — просто переходим на форму
         window.location.href = GOOGLE_FORM_URL;
         return;
       }
 
-      const form = new FormData();
-      form.append('participant_id', participantId);
-      form.append('date',           new Date(sessionStart).toLocaleString('ru-RU'));
-      form.append('duration_sec',   Math.round((Date.now() - sessionStart) / 1000));
-      form.append('points_count',   gazePoints.length);
-      form.append('screen_w',       window.screen.width);
-      form.append('screen_h',       window.screen.height);
-      form.append('user_agent',     navigator.userAgent);
-      form.append('gaze_data',      JSON.stringify(gazePoints));
-      form.append('send_reason',    'checkout');
+      // ── Отправка через скрытую форму (надёжно работает с Google Apps Script) ────
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = GOOGLE_SCRIPT_URL;
+      form.target = 'gaze_submit_iframe'; // отправим в скрытый iframe
+      form.style.display = 'none';
 
-      // Отправляем данные, потом переходим на форму
-      fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        mode:   'no-cors',  // CORS ошибка в консоли — нормально, данные дойдут
-        body:   form
-      })
-      .then(function () {
-        console.log('✅ Данные отправлены. Переход на Google Forms...');
-        window.location.href = GOOGLE_FORM_URL;
-      })
-      .catch(function (err) {
-        console.warn('⚠️ fetch не сработал, пробуем sendBeacon:', err);
-        navigator.sendBeacon(GOOGLE_SCRIPT_URL, form);
-        window.location.href = GOOGLE_FORM_URL;
+      const fields = {
+        participant_id: participantId,
+        date: new Date(sessionStart).toLocaleString('ru-RU'),
+        duration_sec: Math.round((Date.now() - sessionStart) / 1000),
+        points_count: gazePoints.length,
+        screen_w: window.screen.width,
+        screen_h: window.screen.height,
+        user_agent: navigator.userAgent,
+        gaze_data: JSON.stringify(gazePoints),
+        send_reason: 'checkout'
+      };
+
+      Object.keys(fields).forEach(function(key) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = fields[key];
+        form.appendChild(input);
       });
+
+      // Создаём скрытый iframe для отправки
+      let iframe = document.getElementById('gaze_submit_iframe');
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'gaze_submit_iframe';
+        iframe.name = 'gaze_submit_iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+
+      console.log('✅ Данные отправлены. Переход на форму через 1 сек...');
+
+      // Переходим на Google Forms через секунду
+      setTimeout(function() {
+        window.location.href = GOOGLE_FORM_URL;
+      }, 1000);
     }
    </script>
         form.append('screen_w',       window.screen.width);
