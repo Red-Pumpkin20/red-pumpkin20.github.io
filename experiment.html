@@ -801,7 +801,15 @@
         </div>
       </div>
     </section>
-    
+
+    <section id="ad-banner-section" class="padding-medium" aria-label="Research banner section">
+      <div class="container d-flex justify-content-center">
+        <a href="#" id="research-banner-link" class="d-inline-block" aria-label="Research banner">
+          <img id="research-banner" src="images/banner-image2.png" alt="Research banner" width="300" height="250" style="width:300px;height:250px;object-fit:cover;display:block;">
+        </a>
+      </div>
+    </section>
+
     <section id="limited-offer" class="bg-light padding-large">
       <div class="container">
         <div class="row d-flex align-items-center">
@@ -1401,6 +1409,38 @@
 
     const SAMPLE_RATE_MS = 100; // точка каждые 100 мс ≈ 10 точек/сек
 
+    window._bannerRectViewport = null;
+    window._bannerRectPage = null;
+    window._bannerHits = 0;
+
+    function updateBannerRect() {
+      const bannerEl = document.getElementById('research-banner');
+      if (!bannerEl) return;
+      const rect = bannerEl.getBoundingClientRect();
+      window._bannerRectViewport = {
+        left: Math.round(rect.left),
+        top: Math.round(rect.top),
+        right: Math.round(rect.right),
+        bottom: Math.round(rect.bottom),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      };
+      window._bannerRectPage = {
+        left: Math.round(rect.left + window.scrollX),
+        top: Math.round(rect.top + window.scrollY),
+        right: Math.round(rect.right + window.scrollX),
+        bottom: Math.round(rect.bottom + window.scrollY),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      };
+    }
+
+    function isPointInsideBanner(x, y) {
+      const rect = window._bannerRectViewport;
+      if (!rect) return false;
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
 
       if (!sessionStorage.getItem('calibrationComplete')) {
@@ -1418,7 +1458,12 @@
       window._participantId  = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       window._sessionStart   = Date.now();
       window._gazePoints     = [];
+      window._bannerHits     = 0;
       let lastSample         = 0;
+
+      updateBannerRect();
+      window.addEventListener('resize', updateBannerRect);
+      window.addEventListener('scroll', updateBannerRect, { passive: true });
 
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
@@ -1428,11 +1473,18 @@
           const now = Date.now();
           if (now - lastSample < SAMPLE_RATE_MS) return;
           lastSample = now;
-          window._gazePoints.push({
+          const point = {
             x: Math.round(data.x),
             y: Math.round(data.y),
             t: now - window._sessionStart
-          });
+          };
+
+          point.on_banner = isPointInsideBanner(point.x, point.y);
+          if (point.on_banner) {
+            window._bannerHits++;
+          }
+
+          window._gazePoints.push(point);
           if (window._gazePoints.length % 100 === 0)
             console.log('📊 Точек собрано:', window._gazePoints.length);
         })
@@ -1478,6 +1530,9 @@
         screen_w: window.screen.width,
         screen_h: window.screen.height,
         user_agent: navigator.userAgent,
+        banner_rect_viewport: JSON.stringify(window._bannerRectViewport || {}),
+        banner_rect_page: JSON.stringify(window._bannerRectPage || {}),
+        banner_hits: window._bannerHits || 0,
         gaze_data: JSON.stringify(gazePoints),
         send_reason: 'checkout'
       };
