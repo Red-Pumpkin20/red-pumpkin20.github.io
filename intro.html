@@ -346,6 +346,7 @@
         let calibrationPoints = [];
         let currentCalibrationPoint = 0;
         const totalCalibrationPoints = 9;
+        const calibrationDwellMs = 500;
 
         function showStatus(message, type) {
             const statusEl = document.getElementById('calibration-status');
@@ -406,8 +407,27 @@
                 point.className = 'calibration-point';
                 point.style.left = pos.x + '%';
                 point.style.top = pos.y + '%';
+                point.dataset.readyAt = String(Date.now() + calibrationDwellMs);
                 
                 point.onclick = function() {
+                    const now = Date.now();
+                    const readyAt = Number(this.dataset.readyAt || 0);
+
+                    // Пункт 3: короткая фиксация взгляда перед кликом
+                    if (now < readyAt) {
+                        const waitMs = Math.max(0, readyAt - now);
+                        showStatus(`⏱️ Удерживайте взгляд на точке ещё ${waitMs} мс перед кликом`, 'warning');
+                        return;
+                    }
+
+                    // Пункт 1: явная запись точки калибровки в модель WebGazer
+                    const rect = this.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    if (typeof webgazer !== 'undefined' && typeof webgazer.recordScreenPosition === 'function') {
+                        webgazer.recordScreenPosition(centerX, centerY, 'click');
+                    }
+
                     this.style.display = 'none';
                     currentCalibrationPoint++;
                     updateProgress(currentCalibrationPoint, totalCalibrationPoints);
@@ -423,7 +443,7 @@
                 calibrationPoints.push(point);
             });
 
-            showStatus('👀 Кликайте по жёлтым точкам, глядя на них!', 'warning');
+            showStatus('👀 Смотрите на точку ~0.5 сек, затем кликайте по ней', 'warning');
             document.getElementById('start-calibration-btn').disabled = true;
         }
 
