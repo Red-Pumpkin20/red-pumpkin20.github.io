@@ -1412,6 +1412,32 @@
     window._bannerRectViewport = null;
     window._bannerRectPage = null;
     window._bannerHits = 0;
+    window._scrollEvents = [];
+
+    function getViewportMetrics() {
+      return {
+        scroll_x: Math.round(window.scrollX || 0),
+        scroll_y: Math.round(window.scrollY || 0),
+        viewport_w: Math.round(window.innerWidth || document.documentElement.clientWidth || 0),
+        viewport_h: Math.round(window.innerHeight || document.documentElement.clientHeight || 0),
+        doc_w: Math.round(document.documentElement.scrollWidth || 0),
+        doc_h: Math.round(document.documentElement.scrollHeight || 0),
+        dpr: Number((window.devicePixelRatio || 1).toFixed(2))
+      };
+    }
+
+    function recordScrollEvent(reason) {
+      if (!window._sessionStart) return;
+      const m = getViewportMetrics();
+      window._scrollEvents.push({
+        t: Date.now() - window._sessionStart,
+        reason: reason,
+        scroll_x: m.scroll_x,
+        scroll_y: m.scroll_y,
+        viewport_w: m.viewport_w,
+        viewport_h: m.viewport_h
+      });
+    }
 
     function updateBannerRect() {
       const bannerEl = document.getElementById('research-banner');
@@ -1459,7 +1485,25 @@
       window._sessionStart   = Date.now();
       window._gazePoints     = [];
       window._bannerHits     = 0;
+      window._scrollEvents   = [];
       let lastSample         = 0;
+      let lastScrollSample   = 0;
+
+      updateBannerRect();
+      recordScrollEvent('init');
+
+      window.addEventListener('resize', function () {
+        updateBannerRect();
+        recordScrollEvent('resize');
+      });
+
+      window.addEventListener('scroll', function () {
+        const now = Date.now();
+        if (now - lastScrollSample < SAMPLE_RATE_MS) return;
+        lastScrollSample = now;
+        updateBannerRect();
+        recordScrollEvent('scroll');
+      }, { passive: true });
 
       updateBannerRect();
       window.addEventListener('resize', updateBannerRect);
@@ -1473,10 +1517,20 @@
           const now = Date.now();
           if (now - lastSample < SAMPLE_RATE_MS) return;
           lastSample = now;
+          const view = getViewportMetrics();
           const point = {
             x: Math.round(data.x),
             y: Math.round(data.y),
-            t: now - window._sessionStart
+            t: now - window._sessionStart,
+            page_x: Math.round(data.x + view.scroll_x),
+            page_y: Math.round(data.y + view.scroll_y),
+            scroll_x: view.scroll_x,
+            scroll_y: view.scroll_y,
+            viewport_w: view.viewport_w,
+            viewport_h: view.viewport_h,
+            doc_w: view.doc_w,
+            doc_h: view.doc_h,
+            dpr: view.dpr
           };
 
           point.on_banner = isPointInsideBanner(point.x, point.y);
@@ -1522,6 +1576,8 @@
       form.target = 'gaze_submit_iframe'; // отправим в скрытый iframe
       form.style.display = 'none';
 
+      recordScrollEvent('finish');
+
       const fields = {
         participant_id: participantId,
         date: new Date(sessionStart).toLocaleString('ru-RU'),
@@ -1529,7 +1585,9 @@
         points_count: gazePoints.length,
         screen_w: window.screen.width,
         screen_h: window.screen.height,
+        device_pixel_ratio: window.devicePixelRatio || 1,
         user_agent: navigator.userAgent,
+        scroll_events: JSON.stringify(window._scrollEvents || []),
         banner_rect_viewport: JSON.stringify(window._bannerRectViewport || {}),
         banner_rect_page: JSON.stringify(window._bannerRectPage || {}),
         banner_hits: window._bannerHits || 0,
