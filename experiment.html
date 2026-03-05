@@ -336,35 +336,18 @@
                     <a href="cart.html" class="dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                       <svg class="cart">
                         <use xlink:href="#cart"></use>
-                      </svg><span class="fs-6 fw-light">(02)</span>
+                      </svg><span id="cart-count-header" class="fs-6 fw-light">(00)</span>
                     </a>
                     <div class="dropdown-menu animate slide dropdown-menu-start dropdown-menu-lg-end p-3">
                       <h4 class="d-flex justify-content-between align-items-center mb-3">
                         <span class="text-primary">Your cart</span>
-                        <span class="badge bg-primary rounded-pill">2</span>
+                        <span id="cart-count-badge" class="badge bg-primary rounded-pill">0</span>
                       </h4>
-                      <ul class="list-group mb-3">
-                        <li class="list-group-item bg-transparent d-flex justify-content-between lh-sm">
-                          <div>
-                            <h5>
-                              <a href="single-product.html">IPad (9th Gen)</a>
-                            </h5>
-                            <small>High quality in good price.</small>
-                          </div>
-                          <span class="text-primary">$870</span>
-                        </li>
-                        <li class="list-group-item bg-transparent d-flex justify-content-between lh-sm">
-                          <div>
-                            <h5>
-                              <a href="single-product.html">Drone with camera</a>
-                            </h5>
-                            <small>Professional drone with camera.</small>
-                          </div>
-                          <span class="text-primary">$600</span>
-                        </li>
-                        <li class="list-group-item bg-transparent d-flex justify-content-between">
+                      <ul id="cart-items" class="list-group mb-3">
+                        <li class="list-group-item bg-transparent text-center text-muted">Корзина пуста</li>
+                        <li id="cart-total-row" class="list-group-item bg-transparent d-flex justify-content-between d-none">
                           <span class="text-uppercase"><b>Total (USD)</b></span>
-                          <strong>$1470</strong>
+                          <strong id="cart-total-value">$0</strong>
                         </li>
                       </ul>
                       <div class="d-flex flex-wrap justify-content-center">
