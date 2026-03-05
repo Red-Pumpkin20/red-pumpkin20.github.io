@@ -307,7 +307,7 @@
                               <a href="single-product.html">Iphone 15 pro max</a>
                             </h5>
                             <small>Special discounted price.</small>
-                            <a href="#" class="d-block fw-medium text-capitalize mt-2">Add to cart</a>
+                            <a href="#" class="d-block fw-medium text-capitalize mt-2 js-add-to-cart" data-id="wishlist-iphone-15-pro-max" data-title="Iphone 15 pro max" data-price="2000" data-image="images/product-item4.png">Add to cart</a>
                           </div>
                           <span class="text-primary">$2000</span>
                         </li>
@@ -317,7 +317,7 @@
                               <a href="single-product.html">Apple Watch (2nd Gen)</a>
                             </h5>
                             <small>Professional apple watch.</small>
-                            <a href="#" class="d-block fw-medium text-capitalize mt-2">Add to cart</a>
+                            <a href="#" class="d-block fw-medium text-capitalize mt-2 js-add-to-cart" data-id="wishlist-apple-watch-2" data-title="Apple Watch (2nd Gen)" data-price="400" data-image="images/product-item3.png">Add to cart</a>
                           </div>
                           <span class="text-primary">$400</span>
                         </li>
@@ -336,35 +336,18 @@
                     <a href="cart.html" class="dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                       <svg class="cart">
                         <use xlink:href="#cart"></use>
-                      </svg><span class="fs-6 fw-light">(02)</span>
+                      </svg><span id="cart-count-header" class="fs-6 fw-light">(00)</span>
                     </a>
                     <div class="dropdown-menu animate slide dropdown-menu-start dropdown-menu-lg-end p-3">
                       <h4 class="d-flex justify-content-between align-items-center mb-3">
                         <span class="text-primary">Your cart</span>
-                        <span class="badge bg-primary rounded-pill">2</span>
+                        <span id="cart-count-badge" class="badge bg-primary rounded-pill">0</span>
                       </h4>
-                      <ul class="list-group mb-3">
-                        <li class="list-group-item bg-transparent d-flex justify-content-between lh-sm">
-                          <div>
-                            <h5>
-                              <a href="single-product.html">IPad (9th Gen)</a>
-                            </h5>
-                            <small>High quality in good price.</small>
-                          </div>
-                          <span class="text-primary">$870</span>
-                        </li>
-                        <li class="list-group-item bg-transparent d-flex justify-content-between lh-sm">
-                          <div>
-                            <h5>
-                              <a href="single-product.html">Drone with camera</a>
-                            </h5>
-                            <small>Professional drone with camera.</small>
-                          </div>
-                          <span class="text-primary">$600</span>
-                        </li>
-                        <li class="list-group-item bg-transparent d-flex justify-content-between">
+                      <ul id="cart-items" class="list-group mb-3">
+                        <li class="list-group-item bg-transparent text-center text-muted">Корзина пуста</li>
+                        <li id="cart-total-row" class="list-group-item bg-transparent d-flex justify-content-between d-none">
                           <span class="text-uppercase"><b>Total (USD)</b></span>
-                          <strong>$1470</strong>
+                          <strong id="cart-total-value">$0</strong>
                         </li>
                       </ul>
                       <div class="d-flex flex-wrap justify-content-center">
@@ -601,7 +584,7 @@
                 <h5 class="mt-2"><a href="single-product.html">IPad (9th Gen)</a></h5>
                 <span class="price text-primary fw-light mb-2">$870</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <button type="button" href="#" class="btn btn-dark" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Tooltip on top">
+                  <button type="button" class="btn btn-dark js-add-to-cart" data-id="product-item-1" data-title="IPad (9th Gen)" data-price="870" data-image="images/product-item1.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -622,7 +605,7 @@
                 <h5 class="mt-2"><a href="single-product.html">Drone With Camera</a></h5>
                 <span class="price text-primary fw-light mb-2">$600</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-2" data-title="Drone With Camera" data-price="600" data-image="images/product-item2.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -643,7 +626,7 @@
                 <h5 class="mt-2"><a href="single-product.html">Apple Watch (2nd Gen)</a></h5>
                 <span class="price text-primary fw-light mb-2">$400</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-3" data-title="Apple Watch (2nd Gen)" data-price="400" data-image="images/product-item3.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -664,7 +647,7 @@
                 <h5 class="mt-2"><a href="single-product.html">Ultra HD TV</a></h5>
                 <span class="price text-primary fw-light mb-2">$2000</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-4" data-title="Ultra HD TV" data-price="2000" data-image="images/product-item4.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -685,7 +668,7 @@
                 <h5 class="mt-2"><a href="single-product.html">Bluetooth Speaker</a></h5>
                 <span class="price text-primary fw-light mb-2">$75</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-5" data-title="Bluetooth Speaker" data-price="75" data-image="images/product-item5.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -706,7 +689,7 @@
                 <h5 class="mt-2"><a href="single-product.html">White Headset</a></h5>
                 <span class="price text-primary fw-light mb-2">$99</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-6" data-title="White Headset" data-price="99" data-image="images/product-item6.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -727,7 +710,7 @@
                 <h5 class="mt-2"><a href="single-product.html">Black Bluetooth Speaker</a></h5>
                 <span class="price text-primary fw-light mb-2">$80</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-7" data-title="Black Bluetooth Speaker" data-price="80" data-image="images/product-item7.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -748,7 +731,7 @@
                 <h5 class="mt-2"><a href="single-product.html">Large Speaker</a></h5>
                 <span class="price text-primary fw-light mb-2">$450</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-8" data-title="Large Speaker" data-price="450" data-image="images/product-item8.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -769,7 +752,7 @@
                 <h5 class="mt-2"><a href="single-product.html">White EarPods</a></h5>
                 <span class="price text-primary fw-light mb-2">$600</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-9" data-title="White EarPods" data-price="600" data-image="images/product-item9.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -790,7 +773,7 @@
                 <h5 class="mt-2"><a href="single-product.html">Laptop</a></h5>
                 <span class="price text-primary fw-light mb-2">$1200</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-10" data-title="Laptop" data-price="1200" data-image="images/product-item10.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -1321,5 +1304,6 @@
    <!-- Плагины и основной скрипт шаблона — ПОСЛЕ jQuery -->
    <script src="js/plugins.js"></script>
    <script src="js/script.js"></script>
+   <script src="js/cart.js"></script>
   </body>
 </html>
