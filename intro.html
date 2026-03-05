@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Инструкция к эксперименту - Eye Tracking Study</title>
+    <title>Инструкция к эксперименту</title>
     <style>
         * {
             margin: 0;
@@ -250,23 +250,23 @@
     
     <div class="container">
         <div class="card">
-            <h1>🎯 Добро пожаловать в эксперимент!</h1>
-            <p class="subtitle">Исследование поведения взгляда при просмотре веб-сайтов</p>
+            <h1>Добро пожаловать на эксперимент!</h1>
+            <p class="subtitle">Исследование поведения пользователей с помощью eye-tracking</p>
 
             <!-- Основная инструкция -->
             <div id="instruction-section">
-                <h2>📋 Инструкция</h2>
+                <h2>Инструкция</h2>
                 
                 <div class="instruction-text">
                     <p><strong>Уважаемый участник!</strong></p>
-                    <p>Спасибо, что согласились принять участие в нашем исследовании. В этом эксперименте мы изучаем, как люди смотрят на веб-сайты и какие элементы привлекают их внимание.</p>
+                    <p>Спасибо, что согласились принять участие в исследовании. В этом эксперименте мы изучаем поведение людей при взаимодействии с веб-сайтами. Для этого мы задействуем технологию слежения за взглядом, поэтому не пугайтесь когда данная страница запросит доступ к вашей камере. Это нужно сугубо для получения данных вашего взгляда на страницу, изображение с камеры <strong>не будет записано</strong>. Все собранные данные будут использованы <strong>только в научных целях</strong> и <strong>только в обезличенном виде</strong>.</p>
                 </div>
 
                 <div class="highlight-box">
-                    <p><strong>⏱️ Продолжительность:</strong> Эксперимент займёт примерно 10-15 минут вашего времени.</p>
+                    <p><strong>Продолжительность:</strong> эксперимент займёт 5-7 минут вашего времени.</p>
                 </div>
 
-                <h2>🔧 Что вам нужно сделать:</h2>
+                <h2>Что вам нужно сделать:</h2>
 
                 <div class="step">
                     <span class="step-number">1</span>
@@ -280,7 +280,7 @@
 
                 <div class="step">
                     <span class="step-number">3</span>
-                    <span>Нажмите кнопку "Начать калибровку" и разрешите доступ к камере</span>
+                    <span>На следующей странице нажмите кнопку "Начать калибровку" и разрешите доступ к камере</span>
                 </div>
 
                 <div class="step">
@@ -293,26 +293,36 @@
                     <span>После калибровки вы перейдёте к основному эксперименту</span>
                 </div>
 
+                <div class="step">
+                    <span class="step-number">6</span>
+                    <span>На основной странице вам нужно будет выполнить короткое задание: найти и положить в корзину товар "Телевизор Ultra HD". После того как вы его найдете кликните на иконку корзины и внутри нажмите на кнопку перейти к оформлению.</span>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">7</span>
+                    <span>Последний шаг - заполнить короткий опрос, который откроется автоматически.</span>
+                </div>
+
                 <div class="highlight-box">
-                    <p><strong>⚠️ Важно:</strong> Во время эксперимента старайтесь не двигать головой слишком резко и смотрите естественно, как обычно просматриваете веб-сайты.</p>
+                    <p><strong>Важно:</strong> Во время эксперимента старайтесь не двигать головой слишком резко и смотрите естественно, как обычно просматриваете веб-сайты.</p>
                 </div>
 
                 <div class="button-container">
                     <button class="btn btn-calibrate" onclick="startCalibrationProcess()">
-                        🎯 Начать калибровку
+                        Начать калибровку
                     </button>
                 </div>
             </div>
 
             <!-- Секция калибровки -->
             <div id="calibration-section" class="calibration-container">
-                <h2>🎯 Калибровка системы отслеживания взгляда</h2>
+                <h2>Калибровка системы отслеживания взгляда</h2>
 
                 <div class="calibration-info">
                     <h3>Как проводить калибровку:</h3>
                     <ul>
                         <li>На экране появятся <strong>9 жёлтых точек</strong> в разных местах</li>
-                        <li><strong>Смотрите прямо на каждую точку</strong>, затем кликните по ней</li>
+                        <li><strong>Смотрите прямо на каждую точку</strong>, а затем кликайте по ней</li>
                         <li>Старайтесь <strong>не двигать головой</strong> во время калибровки</li>
                         <li>Кликайте <strong>медленно и точно</strong>, делая паузу между кликами</li>
                     </ul>
@@ -329,7 +339,7 @@
                         Начать калибровку точек
                     </button>
                     <button class="btn btn-start" id="proceed-btn" onclick="proceedToExperiment()">
-                        ✅ Перейти к эксперименту
+                        Перейти к эксперименту
                     </button>
                 </div>
             </div>
@@ -416,7 +426,7 @@
                     // Пункт 3: короткая фиксация взгляда перед кликом
                     if (now < readyAt) {
                         const waitMs = Math.max(0, readyAt - now);
-                        showStatus(`⏱️ Удерживайте взгляд на точке ещё ${waitMs} мс перед кликом`, 'warning');
+                        showStatus(`Удерживайте взгляд на точке ещё ${waitMs} мс перед кликом`, 'warning');
                         return;
                     }
 
@@ -455,7 +465,7 @@
                 }
             });
 
-            showStatus('🎉 Калибровка завершена успешно!', 'success');
+            showStatus('Калибровка завершена успешно!', 'success');
             document.getElementById('proceed-btn').style.display = 'inline-block';
             document.getElementById('start-calibration-btn').textContent = 'Повторить калибровку';
             document.getElementById('start-calibration-btn').disabled = false;
@@ -464,7 +474,7 @@
 
         function proceedToExperiment() {
             if (!calibrationComplete) {
-                showStatus('⚠️ Сначала пройдите калибровку!', 'warning');
+                showStatus('Сначала пройдите калибровку!', 'warning');
                 return;
             }
 
