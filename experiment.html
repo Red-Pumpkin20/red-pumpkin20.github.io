@@ -1,7 +1,7 @@
  <!DOCTYPE html>
 <html>
   <head>
-    <title>ShopLite - Simple eCommerce Website Template</title>
+    <title>ShopLite — простой шаблон интернет-магазина</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +16,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+  
+    <style>
+      #navbar .nav-link { font-size: 0.92rem; }
+      .banner-content h2 { font-size: clamp(1.6rem, 3.1vw, 2.4rem); }
+      .btn { white-space: normal; }
+    </style>
   </head>
   <body>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
@@ -104,29 +110,29 @@
             <button type="submit" class="search-submit"><svg class="search"><use xlink:href="#search"></use></svg></button>
           </form>
 
-          <h5 class="cat-list-title">Browse Categories</h5>
+          <h5 class="cat-list-title">Категории</h5>
           
           <ul class="cat-list">
             <li class="cat-list-item">
-              <a href="#" title="Mobile Phones">Mobile Phones</a>
+              <a href="#" title="Мобильные телефоны">Мобильные телефоны</a>
             </li>
             <li class="cat-list-item">
-              <a href="#" title="Smart Watches">Smart Watches</a>
+              <a href="#" title="Умные часы">Умные часы</a>
             </li>
             <li class="cat-list-item">
-              <a href="#" title="Headphones">Headphones</a>
+              <a href="#" title="Наушники">Наушники</a>
             </li>
             <li class="cat-list-item">
-              <a href="#" title="Accessories">Accessories</a>
+              <a href="#" title="Аксессуары">Аксессуары</a>
             </li>
             <li class="cat-list-item">
-              <a href="#" title="Monitors">Monitors</a>
+              <a href="#" title="Мониторы">Мониторы</a>
             </li>
             <li class="cat-list-item">
-              <a href="#" title="Speakers">Speakers</a>
+              <a href="#" title="Колонки">Колонки</a>
             </li>
             <li class="cat-list-item">
-              <a href="#" title="Memory Cards">Memory Cards</a>
+              <a href="#" title="Карты памяти">Карты памяти</a>
             </li>
           </ul>
 
@@ -139,13 +145,13 @@
         <div class="container-fluid">
           <div class="row g-0">
             <div class="col-md-4">
-              <p class="fs-6 my-2 text-center">Need any help? Call us <a href="#">112233344455</a></p>
+              <p class="fs-6 my-2 text-center">Нужна помощь? Позвоните нам <a href="#">112233344455</a></p>
             </div>
             <div class="col-md-4 border-start border-end">
-              <p class="fs-6 my-2 text-center">Summer sale discount off 60% off! <a class="text-decoration-underline" href="shop.html">Shop Now</a></p>
+              <p class="fs-6 my-2 text-center">Летняя распродажа: скидки до 60%! <a class="text-decoration-underline" href="shop.html">Купить сейчас</a></p>
             </div>
             <div class="col-md-4">
-              <p class="fs-6 my-2 text-center">2-3 business days delivery & free returns</p>
+              <p class="fs-6 my-2 text-center">Доставка за 2–3 рабочих дня и бесплатный возврат</p>
             </div>
           </div>
         </div>
@@ -171,51 +177,51 @@
             <div class="offcanvas-body">
               <ul id="navbar" class="navbar-nav text-uppercase justify-content-start justify-content-lg-center align-items-start align-items-lg-center flex-grow-1">
                 <li class="nav-item">
-                  <a class="nav-link me-4 active" href="index.html">Home</a>
+                  <a class="nav-link me-4 active" href="index.html">Главная</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link me-4" href="about.html">About</a>
+                  <a class="nav-link me-4" href="about.html">О нас</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link me-4" href="shop.html">Shop</a>
+                  <a class="nav-link me-4" href="shop.html">Магазин</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link me-4" href="blog.html">Blogs</a>
+                  <a class="nav-link me-4" href="blog.html">Блог</a>
                 </li>
                 <li class="nav-item dropdown">
-                  <a class="nav-link me-4 dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Pages</a>
+                  <a class="nav-link me-4 dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Страницы</a>
                   <ul class="dropdown-menu animate slide border">
                     <li>
-                      <a href="about.html" class="dropdown-item fw-light">About <span class="badge bg-primary">Pro</span></a>
+                      <a href="about.html" class="dropdown-item fw-light">О нас <span class="badge bg-primary">Pro</span></a>
                     </li>
                     <li>
-                      <a href="shop.html" class="dropdown-item fw-light">Shop <span class="badge bg-primary">Pro</span></a>
+                      <a href="shop.html" class="dropdown-item fw-light">Магазин <span class="badge bg-primary">Pro</span></a>
                     </li>
                     <li>
-                      <a href="single-product.html" class="dropdown-item fw-light">Single Product <span class="badge bg-primary">Pro</span></a>
+                      <a href="single-product.html" class="dropdown-item fw-light">Товар <span class="badge bg-primary">Pro</span></a>
                     </li>
                     <li>
-                      <a href="cart.html" class="dropdown-item fw-light">Cart <span class="badge bg-primary">Pro</span></a>
+                      <a href="cart.html" class="dropdown-item fw-light">Корзина <span class="badge bg-primary">Pro</span></a>
                     </li>
                     <li>
-                      <a href="checkout.html" class="dropdown-item fw-light">Checkout <span class="badge bg-primary">Pro</span></a>
+                      <a href="checkout.html" class="dropdown-item fw-light">Оформление <span class="badge bg-primary">Pro</span></a>
                     </li>
                     <li>
-                      <a href="blog.html" class="dropdown-item fw-light">Blog <span class="badge bg-primary">Pro</span></a>
+                      <a href="blog.html" class="dropdown-item fw-light">Блог <span class="badge bg-primary">Pro</span></a>
                     </li>
                     <li>
-                      <a href="single-post.html" class="dropdown-item fw-light">Single Post <span class="badge bg-primary">Pro</span></a>
+                      <a href="single-post.html" class="dropdown-item fw-light">Пост <span class="badge bg-primary">Pro</span></a>
                     </li>
                     <li>
-                      <a href="contact.html" class="dropdown-item fw-light">Contact <span class="badge bg-primary">Pro</span></a>
+                      <a href="contact.html" class="dropdown-item fw-light">Контакты <span class="badge bg-primary">Pro</span></a>
                     </li>
                   </ul>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link me-4" href="contact.html">Contact</a>
+                  <a class="nav-link me-4" href="contact.html">Контакты</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link text-decoration-underline me-4" href="https://templatesjungle.gumroad.com/l/shoplite-simple-ecommerce-bootstrap-html-css-website-template" target="_blank">Get Pro</a>
+                  <a class="nav-link text-decoration-underline me-4" href="https://templatesjungle.gumroad.com/l/shoplite-simple-ecommerce-bootstrap-html-css-website-template" target="_blank">Купить Pro</a>
                 </li>
               </ul>
               <div class="user-items d-flex">
@@ -246,41 +252,41 @@
                                   <div class="tabs-listing">
                                     <nav>
                                       <div class="nav nav-tabs d-flex justify-content-center" id="nav-tab" role="tablist">
-                                        <button class="nav-link text-uppercase active" id="nav-sign-in-tab" data-bs-toggle="tab" data-bs-target="#nav-sign-in" type="button" role="tab" aria-controls="nav-sign-in" aria-selected="true">Sign In</button>
-                                        <button class="nav-link text-uppercase" id="nav-register-tab" data-bs-toggle="tab" data-bs-target="#nav-register" type="button" role="tab" aria-controls="nav-register" aria-selected="false">Register</button>
+                                        <button class="nav-link text-uppercase active" id="nav-sign-in-tab" data-bs-toggle="tab" data-bs-target="#nav-sign-in" type="button" role="tab" aria-controls="nav-sign-in" aria-selected="true">Вход</button>
+                                        <button class="nav-link text-uppercase" id="nav-register-tab" data-bs-toggle="tab" data-bs-target="#nav-register" type="button" role="tab" aria-controls="nav-register" aria-selected="false">Регистрация</button>
                                       </div>
                                     </nav>
                                     <div class="tab-content" id="nav-tabContent">
                                       <div class="tab-pane fade active show" id="nav-sign-in" role="tabpanel" aria-labelledby="nav-sign-in-tab">
                                         <div class="form-group py-3">
-                                          <label class="mb-2" for="sign-in">Username or email address *</label>
-                                          <input type="text" minlength="2" name="username" placeholder="Your Username" class="form-control w-100 rounded-3 p-3" required>
+                                          <label class="mb-2" for="sign-in">Имя пользователя или email *</label>
+                                          <input type="text" minlength="2" name="username" placeholder="Ваше имя пользователя" class="form-control w-100 rounded-3 p-3" required>
                                         </div>
                                         <div class="form-group pb-3">
-                                          <label class="mb-2" for="sign-in">Password *</label>
-                                          <input type="password" minlength="2" name="password" placeholder="Your Password" class="form-control w-100 rounded-3 p-3" required>
+                                          <label class="mb-2" for="sign-in">Пароль *</label>
+                                          <input type="password" minlength="2" name="password" placeholder="Ваш пароль" class="form-control w-100 rounded-3 p-3" required>
                                         </div>
                                         <label class="py-3">
                                           <input type="checkbox" required="" class="d-inline">
-                                          <span class="label-body">Remember me</span>
-                                          <span class="label-body"><a href="#" class="fw-bold">Forgot Password</a></span>
+                                          <span class="label-body">Запомнить меня</span>
+                                          <span class="label-body"><a href="#" class="fw-bold">Забыли пароль</a></span>
                                         </label>
-                                        <button type="submit" name="submit" class="btn btn-dark w-100 my-3">Login</button>
+                                        <button type="submit" name="submit" class="btn btn-dark w-100 my-3">Войти</button>
                                       </div>
                                       <div class="tab-pane fade" id="nav-register" role="tabpanel" aria-labelledby="nav-register-tab">
                                         <div class="form-group py-3">
-                                          <label class="mb-2" for="register">Your email address *</label>
-                                          <input type="text" minlength="2" name="username" placeholder="Your Email Address" class="form-control w-100 rounded-3 p-3" required>
+                                          <label class="mb-2" for="register">Ваш email *</label>
+                                          <input type="text" minlength="2" name="username" placeholder="Ваш email" class="form-control w-100 rounded-3 p-3" required>
                                         </div>
                                         <div class="form-group pb-3">
-                                          <label class="mb-2" for="sign-in">Password *</label>
-                                          <input type="password" minlength="2" name="password" placeholder="Your Password" class="form-control w-100 rounded-3 p-3" required>
+                                          <label class="mb-2" for="sign-in">Пароль *</label>
+                                          <input type="password" minlength="2" name="password" placeholder="Ваш пароль" class="form-control w-100 rounded-3 p-3" required>
                                         </div>
                                         <label class="py-3">
                                           <input type="checkbox" required="" class="d-inline">
-                                          <span class="label-body">I agree to the <a href="#" class="fw-bold">Privacy Policy</a></span>
+                                          <span class="label-body">Я согласен с <a href="#" class="fw-bold">Политикой конфиденциальности</a></span>
                                         </label>
-                                        <button type="submit" name="submit" class="btn btn-dark w-100 my-3">Register</button>
+                                        <button type="submit" name="submit" class="btn btn-dark w-100 my-3">Регистрация</button>
                                       </div>
                                     </div>
                                   </div>
@@ -297,7 +303,7 @@
                     </a>
                     <div class="dropdown-menu animate slide dropdown-menu-start dropdown-menu-lg-end p-3">
                       <h4 class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="text-primary">Your wishlist</span>
+                        <span class="text-primary">Избранное</span>
                         <span class="badge bg-primary rounded-pill">2</span>
                       </h4>
                       <ul class="list-group mb-3">
@@ -306,8 +312,8 @@
                             <h5>
                               <a href="single-product.html">Iphone 15 pro max</a>
                             </h5>
-                            <small>Special discounted price.</small>
-                            <a href="#" class="d-block fw-medium text-capitalize mt-2 js-add-to-cart" data-id="wishlist-iphone-15-pro-max" data-title="Iphone 15 pro max" data-price="2000" data-image="images/product-item4.png">Add to cart</a>
+                            <small>Специальная цена со скидкой.</small>
+                            <a href="#" class="d-block fw-medium text-capitalize mt-2 js-add-to-cart" data-id="wishlist-iphone-15-pro-max" data-title="Iphone 15 pro max" data-price="2000" data-image="images/product-item4.png">В корзину</a>
                           </div>
                           <span class="text-primary">$2000</span>
                         </li>
@@ -316,19 +322,19 @@
                             <h5>
                               <a href="single-product.html">Apple Watch (2nd Gen)</a>
                             </h5>
-                            <small>Professional apple watch.</small>
-                            <a href="#" class="d-block fw-medium text-capitalize mt-2 js-add-to-cart" data-id="wishlist-apple-watch-2" data-title="Apple Watch (2nd Gen)" data-price="400" data-image="images/product-item3.png">Add to cart</a>
+                            <small>Профессиональные часы Apple.</small>
+                            <a href="#" class="d-block fw-medium text-capitalize mt-2 js-add-to-cart" data-id="wishlist-apple-watch-2" data-title="Apple Watch (2nd Gen)" data-price="400" data-image="images/product-item3.png">В корзину</a>
                           </div>
                           <span class="text-primary">$400</span>
                         </li>
                         <li class="list-group-item bg-transparent d-flex justify-content-between">
-                          <span class="text-uppercase"><b>Total (USD)</b></span>
+                          <span class="text-uppercase"><b>Итого (USD)</b></span>
                           <strong>$1470</strong>
                         </li>
                       </ul>
                       <div class="d-flex flex-wrap justify-content-center">
-                        <a href="#" class="w-100 btn btn-dark mb-1" type="submit">Add all to cart</a>
-                        <a href="cart.html" class="w-100 btn btn-primary" type="submit">View cart</a>
+                        <a href="#" class="w-100 btn btn-dark mb-1" type="submit">Добавить всё в корзину</a>
+                        <a href="cart.html" class="w-100 btn btn-primary" type="submit">Открыть корзину</a>
                       </div>
                     </div>
                   </li>
@@ -340,19 +346,19 @@
                     </a>
                     <div class="dropdown-menu animate slide dropdown-menu-start dropdown-menu-lg-end p-3">
                       <h4 class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="text-primary">Your cart</span>
+                        <span class="text-primary">Ваша корзина</span>
                         <span id="cart-count-badge" class="badge bg-primary rounded-pill">0</span>
                       </h4>
                       <ul id="cart-items" class="list-group mb-3">
                         <li class="list-group-item bg-transparent text-center text-muted">Корзина пуста</li>
                         <li id="cart-total-row" class="list-group-item bg-transparent d-flex justify-content-between d-none">
-                          <span class="text-uppercase"><b>Total (USD)</b></span>
+                          <span class="text-uppercase"><b>Итого (USD)</b></span>
                           <strong id="cart-total-value">$0</strong>
                         </li>
                       </ul>
                       <div class="d-flex flex-wrap justify-content-center">
-                        <a href="cart.html" class="w-100 btn btn-dark mb-1" type="submit">View Cart</a>
-                        <button onclick="finishExperiment(event)" class="w-100 btn btn-primary">Go to checkout</button>
+                        <a href="cart.html" class="w-100 btn btn-dark mb-1" type="submit">Открыть корзину</a>
+                        <button onclick="finishExperiment(event)" class="w-100 btn btn-primary">Перейти к оформлению</button>
                       </div>
                     </div>
                   </li>
@@ -384,8 +390,8 @@
                 <div class="col-md-5 offset-md-1">
                   <div class="banner-content">
                     <h2>GoPro hero9 Black</h2>
-                    <p>Limited stocks available. Grab it now!</p>
-                    <a href="shop.html" class="btn mt-3">Shop Collection</a>
+                    <p>Ограниченное количество. Успейте купить!</p>
+                    <a href="shop.html" class="btn mt-3">Смотреть коллекцию</a>
                   </div>
                 </div>
                 <div class="col-md-6 text-center">
@@ -402,8 +408,8 @@
                 <div class="col-md-5 offset-md-1">
                   <div class="banner-content">
                     <h2>Iphone 15 Pro Max</h2>
-                    <p>Discount available. Grab it now!</p>
-                    <a href="shop.html" class="btn mt-3">Shop Product</a>
+                    <p>Доступна скидка. Успейте купить!</p>
+                    <a href="shop.html" class="btn mt-3">Купить товар</a>
                   </div>
                 </div>
                 <div class="col-md-6 text-center">
@@ -419,9 +425,9 @@
               <div class="row d-flex flex-column-reverse flex-md-row align-items-center">
                 <div class="col-md-5 offset-md-1">
                   <div class="banner-content">
-                    <h2>Macbook Collection</h2>
-                    <p>Limited stocks available. Grab it now!</p>
-                    <a href="shop.html" class="btn mt-3">Shop Collection</a>
+                    <h2>Коллекция MacBook</h2>
+                    <p>Ограниченное количество. Успейте купить!</p>
+                    <a href="shop.html" class="btn mt-3">Смотреть коллекцию</a>
                   </div>
                 </div>
                 <div class="col-md-6 text-center">
@@ -447,8 +453,8 @@
                 </svg>
               </div>
               <div class="icon-box-content">
-                <h4 class="card-title mb-1 text-uppercase text-dark">Free delivery</h4>
-                <p>Consectetur adipi elit lorem ipsum dolor sit amet.</p>
+                <h4 class="card-title mb-1 text-uppercase text-dark">Бесплатная доставка</h4>
+                <p>Быстрая доставка по всей стране без лишних затрат.</p>
               </div>
             </div>
           </div>
@@ -460,8 +466,8 @@
                 </svg>
               </div>
               <div class="icon-box-content">
-                <h4 class="card-title mb-1 text-uppercase text-dark">Quality guarantee</h4>
-                <p>Dolor sit amet orem ipsu mcons ectetur adipi elit.</p>
+                <h4 class="card-title mb-1 text-uppercase text-dark">Гарантия качества</h4>
+                <p>Только проверенная техника и официальная гарантия.</p>
               </div>
             </div>
           </div>
@@ -473,8 +479,8 @@
                 </svg>
               </div>
               <div class="icon-box-content">
-                <h4 class="card-title mb-1 text-uppercase text-dark">Daily offers</h4>
-                <p>Amet consectetur adipi elit loreme ipsum dolor sit.</p>
+                <h4 class="card-title mb-1 text-uppercase text-dark">Ежедневные предложения</h4>
+                <p>Новые акции каждый день на популярные товары.</p>
               </div>
             </div>
           </div>
@@ -486,8 +492,8 @@
                 </svg>
               </div>
               <div class="icon-box-content">
-                <h4 class="card-title mb-1 text-uppercase text-dark">100% secure payment</h4>
-                <p>Rem Lopsum dolor sit amet, consectetur adipi elit.</p>
+                <h4 class="card-title mb-1 text-uppercase text-dark">100% безопасная оплата</h4>
+                <p>Надёжные платёжные методы и защита ваших данных.</p>
               </div>
             </div>
           </div>
@@ -498,14 +504,14 @@
     <section id="categories">
       <div class="container">
         <div class="section-title overflow-hidden mb-4">
-          <h3 class="d-flex align-items-center">Categories</h3>
+          <h3 class="d-flex align-items-center">Категории</h3>
         </div>
         <div class="row">
           <div class="col-md-2">
             <div class="card text-center py-4 mb-3 border rounded-3">
               <a href="shop.html">
                 <img src="images/cat-item1.png" class="img-fluid" alt="cart item">
-                <h5 class="mt-2"><a href="shop.html">Phones</a></h5>
+                <h5 class="mt-2"><a href="shop.html">Телефоны</a></h5>
               </a>
             </div>
           </div>
@@ -513,7 +519,7 @@
             <div class="card text-center py-4 mb-3 border rounded-3">
               <a href="shop.html">
                 <img src="images/cat-item2.png" class="img-fluid" alt="cart item">
-                <h5 class="mt-2"><a href="shop.html">PlayStations</a></h5>
+                <h5 class="mt-2"><a href="shop.html">PlayStation</a></h5>
               </a>
             </div>
           </div>
@@ -521,7 +527,7 @@
             <div class="card text-center py-4 mb-3 border rounded-3">
               <a href="shop.html">
                 <img src="images/cat-item3.png" class="img-fluid" alt="cart item">
-                <h5 class="mt-2"><a href="shop.html">Digital watches</a></h5>
+                <h5 class="mt-2"><a href="shop.html">Цифровые часы</a></h5>
               </a>
             </div>
           </div>
@@ -545,7 +551,7 @@
             <div class="card text-center py-4 mb-3 border rounded-3">
               <a href="shop.html">
                 <img src="images/cat-item6.png" class="img-fluid" alt="cart item">
-                <h5 class="mt-2"><a href="shop.html">Laptops</a></h5>
+                <h5 class="mt-2"><a href="shop.html">Ноутбуки</a></h5>
               </a>
             </div>
           </div>
@@ -564,7 +570,7 @@
     <section id="best-selling-items" class="position-relative padding-large">
       <div class="container">
         <div class="section-title overflow-hidden mb-4">
-          <h3 class="d-flex align-items-center">Best selling items</h3>
+          <h3 class="d-flex align-items-center">Хиты продаж</h3>
         </div>
         <div class="position-absolute top-50 end-0 pe-0 pe-xxl-5 me-0 me-xxl-5 swiper-next product-slider-button-next">
           <svg class="chevron-forward-circle d-flex justify-content-center align-items-center border rounded-3 p-2" width="55" height="55">
@@ -602,7 +608,7 @@
             <div class="swiper-slide">
               <div class="card position-relative text-center py-4 border rounded-3">
                 <img src="images/product-item2.png" class="img-fluid" alt="product item">
-                <h5 class="mt-2"><a href="single-product.html">Drone With Camera</a></h5>
+                <h5 class="mt-2"><a href="single-product.html">Дрон с камерой</a></h5>
                 <span class="price text-primary fw-light mb-2">$600</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
                   <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-2" data-title="Drone With Camera" data-price="600" data-image="images/product-item2.png">
@@ -644,7 +650,7 @@
             <div class="swiper-slide">
               <div class="card position-relative text-center py-4 border rounded-3">
                 <img src="images/product-item4.png" class="img-fluid" alt="product item">
-                <h5 class="mt-2"><a href="single-product.html">Ultra HD TV</a></h5>
+                <h5 class="mt-2"><a href="single-product.html">Телевизор Ultra HD</a></h5>
                 <span class="price text-primary fw-light mb-2">$2000</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
                   <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-4" data-title="Ultra HD TV" data-price="2000" data-image="images/product-item4.png">
@@ -665,10 +671,10 @@
             <div class="swiper-slide">
               <div class="card position-relative text-center py-4 border rounded-3">
                 <img src="images/product-item5.png" class="img-fluid" alt="product item">
-                <h5 class="mt-2"><a href="single-product.html">Bluetooth Speaker</a></h5>
+                <h5 class="mt-2"><a href="single-product.html">Bluetooth-колонка</a></h5>
                 <span class="price text-primary fw-light mb-2">$75</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-5" data-title="Bluetooth Speaker" data-price="75" data-image="images/product-item5.png">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-5" data-title="Bluetooth-колонка" data-price="75" data-image="images/product-item5.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -686,7 +692,7 @@
             <div class="swiper-slide">
               <div class="card position-relative text-center py-4 border rounded-3">
                 <img src="images/product-item6.png" class="img-fluid" alt="product item">
-                <h5 class="mt-2"><a href="single-product.html">White Headset</a></h5>
+                <h5 class="mt-2"><a href="single-product.html">Белая гарнитура</a></h5>
                 <span class="price text-primary fw-light mb-2">$99</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
                   <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-6" data-title="White Headset" data-price="99" data-image="images/product-item6.png">
@@ -707,10 +713,10 @@
             <div class="swiper-slide">
               <div class="card position-relative text-center py-4 border rounded-3">
                 <img src="images/product-item7.png" class="img-fluid" alt="product item">
-                <h5 class="mt-2"><a href="single-product.html">Black Bluetooth Speaker</a></h5>
+                <h5 class="mt-2"><a href="single-product.html">Чёрная Bluetooth-колонка</a></h5>
                 <span class="price text-primary fw-light mb-2">$80</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-7" data-title="Black Bluetooth Speaker" data-price="80" data-image="images/product-item7.png">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-7" data-title="Black Bluetooth-колонка" data-price="80" data-image="images/product-item7.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -728,7 +734,7 @@
             <div class="swiper-slide">
               <div class="card position-relative text-center py-4 border rounded-3">
                 <img src="images/product-item8.png" class="img-fluid" alt="product item">
-                <h5 class="mt-2"><a href="single-product.html">Large Speaker</a></h5>
+                <h5 class="mt-2"><a href="single-product.html">Большая колонка</a></h5>
                 <span class="price text-primary fw-light mb-2">$450</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
                   <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-8" data-title="Large Speaker" data-price="450" data-image="images/product-item8.png">
@@ -749,7 +755,7 @@
             <div class="swiper-slide">
               <div class="card position-relative text-center py-4 border rounded-3">
                 <img src="images/product-item9.png" class="img-fluid" alt="product item">
-                <h5 class="mt-2"><a href="single-product.html">White EarPods</a></h5>
+                <h5 class="mt-2"><a href="single-product.html">Белые EarPods</a></h5>
                 <span class="price text-primary fw-light mb-2">$600</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
                   <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-9" data-title="White EarPods" data-price="600" data-image="images/product-item9.png">
@@ -770,10 +776,10 @@
             <div class="swiper-slide">
               <div class="card position-relative text-center py-4 border rounded-3">
                 <img src="images/product-item10.png" class="img-fluid" alt="product item">
-                <h5 class="mt-2"><a href="single-product.html">Laptop</a></h5>
+                <h5 class="mt-2"><a href="single-product.html">Ноутбук</a></h5>
                 <span class="price text-primary fw-light mb-2">$1200</span>
                 <div class="card-concern position-absolute start-0 end-0 d-flex gap-2">
-                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-10" data-title="Laptop" data-price="1200" data-image="images/product-item10.png">
+                  <a href="#" class="btn btn-dark js-add-to-cart" data-id="product-item-10" data-title="Ноутбук" data-price="1200" data-image="images/product-item10.png">
                     <svg class="cart">
                       <use xlink:href="#cart"></use>
                     </svg>
@@ -802,29 +808,29 @@
             </div>
           </div>
           <div class="col-md-5 offset-md-1">
-            <h2>30% Discount on apple collection</h2>
+            <h2>Скидка 30% на коллекцию Apple</h2>
             <div id="countdown-clock" class="text-dark d-flex align-items-center my-3">
               <div class="time d-grid pe-3">
                 <span class="days fs-1 fw-normal"></span>
-                <small>Days</small>
+                <small>Дней</small>
               </div>
               <span class="fs-1 text-primary">:</span>
               <div class="time d-grid pe-3 ps-3">
                 <span class="hours fs-1 fw-normal"></span>
-                <small>Hrs</small>
+                <small>Час</small>
               </div>
               <span class="fs-1 text-primary">:</span>
               <div class="time d-grid pe-3 ps-3">
                 <span class="minutes fs-1 fw-normal"></span>
-                <small>Min</small>
+                <small>Мин</small>
               </div>
               <span class="fs-1 text-primary">:</span>
               <div class="time d-grid ps-3">
                 <span class="seconds fs-1 fw-normal"></span>
-                <small>Sec</small>
+                <small>Сек</small>
               </div>
             </div>
-            <a href="shop.html" class="btn mt-3">Shop Collection</a>
+            <a href="shop.html" class="btn mt-3">Смотреть коллекцию</a>
             </div>
           </div>
         </div>
@@ -837,13 +843,13 @@
           <div class="col-md-6 mb-4 mb-lg-0 col-lg-3">
             <div class="featured border rounded-3 p-4">
               <div class="section-title overflow-hidden mb-4 mt-2">
-                <h3 class="d-flex flex-column mb-0">Featured</h3>
+                <h3 class="d-flex flex-column mb-0">Рекомендуем</h3>
               </div>
               <div class="items-lists">
                 <div class="item d-flex">
                   <img src="images/item-image1.jpg" class="img-fluid rounded-3" alt="product item">
                   <div class="item-content ms-3">
-                    <h5 class="mt-2"><a href="single-product.html">Wireless headset</a></h5>
+                    <h5 class="mt-2"><a href="single-product.html">Беспроводная гарнитура</a></h5>
                     <span class="price text-primary fw-light mb-2">$500</span>
                   </div>
                 </div>
@@ -869,13 +875,13 @@
           <div class="col-md-6 mb-4 mb-lg-0 col-lg-3">
             <div class="latest-items border rounded-3 p-4">
               <div class="section-title overflow-hidden mb-4 mt-2">
-                <h3 class="d-flex flex-column mb-0">Latest items</h3>
+                <h3 class="d-flex flex-column mb-0">Новинки</h3>
               </div>
               <div class="items-lists">
                 <div class="item d-flex">
                   <img src="images/item-image4.jpg" class="img-fluid rounded-3" alt="product item">
                   <div class="item-content ms-3">
-                    <h5 class="mt-2"><a href="single-product.html">Apple airPod</a></h5>
+                    <h5 class="mt-2"><a href="single-product.html">Apple AirPod</a></h5>
                     <span class="price text-primary fw-light mb-2">$450</span>
                   </div>
                 </div>
@@ -883,7 +889,7 @@
                 <div class="item d-flex">
                   <img src="images/item-image5.jpg" class="img-fluid rounded-3" alt="product item">
                   <div class="item-content ms-3">
-                    <h5 class="mt-2"><a href="single-product.html">Screen touch watch</a></h5>
+                    <h5 class="mt-2"><a href="single-product.html">Сенсорные часы</a></h5>
                     <span class="price text-primary fw-light mb-2">$750</span>
                   </div>
                 </div>
@@ -891,7 +897,7 @@
                 <div class="item d-flex">
                   <img src="images/item-image6.jpg" class="img-fluid rounded-3" alt="product item">
                   <div class="item-content ms-3">
-                    <h5 class="mt-2"><a href="single-product.html">Digital watch</a></h5>
+                    <h5 class="mt-2"><a href="single-product.html">Цифровые часы</a></h5>
                     <span class="price text-primary fw-light mb-2">$660</span>
                   </div>
                 </div>
@@ -901,13 +907,13 @@
           <div class="col-md-6 mb-4 mb-lg-0 col-lg-3">
             <div class="best-reviewed border rounded-3 p-4">
               <div class="section-title overflow-hidden mb-4 mt-2">
-                <h3 class="d-flex flex-column mb-0">Best reviewed</h3>
+                <h3 class="d-flex flex-column mb-0">Лучшие по отзывам</h3>
               </div>
               <div class="items-lists">
                 <div class="item d-flex">
                   <img src="images/item-image7.jpg" class="img-fluid rounded-3" alt="product item">
                   <div class="item-content ms-3">
-                    <h5 class="mt-2"><a href="single-product.html">Wireless Joysticks</a></h5>
+                    <h5 class="mt-2"><a href="single-product.html">Беспроводные джойстики</a></h5>
                     <span class="price text-primary fw-light mb-2">$350</span>
                   </div>
                 </div>
@@ -915,7 +921,7 @@
                 <div class="item d-flex">
                   <img src="images/item-image8.jpg" class="img-fluid rounded-3" alt="product item">
                   <div class="item-content ms-3">
-                    <h5 class="mt-2"><a href="single-product.html">Apple White AirPod</a></h5>
+                    <h5 class="mt-2"><a href="single-product.html">Белый Apple AirPod</a></h5>
                     <span class="price text-primary fw-light mb-2">$330</span>
                   </div>
                 </div>
@@ -923,7 +929,7 @@
                 <div class="item d-flex">
                   <img src="images/item-image9.jpg" class="img-fluid rounded-3" alt="product item">
                   <div class="item-content ms-3">
-                    <h5 class="mt-2"><a href="single-product.html">Gimbal stabilizer</a></h5>
+                    <h5 class="mt-2"><a href="single-product.html">Стабилизатор-гимбал</a></h5>
                     <span class="price text-primary fw-light mb-2">$920</span>
                   </div>
                 </div>
@@ -933,7 +939,7 @@
           <div class="col-md-6 mb-4 mb-lg-0 col-lg-3">
             <div class="on-sale border rounded-3 p-4">
               <div class="section-title overflow-hidden mb-4 mt-2">
-                <h3 class="d-flex flex-column mb-0">On sale</h3>
+                <h3 class="d-flex flex-column mb-0">Распродажа</h3>
               </div>
               <div class="items-lists">
                 <div class="item d-flex">
@@ -947,7 +953,7 @@
                 <div class="item d-flex">
                   <img src="images/item-image11.jpg" class="img-fluid rounded-3" alt="product item">
                   <div class="item-content ms-3">
-                    <h5 class="mt-2"><a href="single-product.html">White AirPods</a></h5>
+                    <h5 class="mt-2"><a href="single-product.html">Белые AirPods</a></h5>
                     <span class="price text-primary fw-light mb-2"><s class="fs-5 fw-lighter text-muted">$500</s> $410</span>
                   </div>
                 </div>
@@ -955,7 +961,7 @@
                 <div class="item d-flex">
                   <img src="images/item-image12.jpg" class="img-fluid rounded-3" alt="product item">
                   <div class="item-content ms-3">
-                    <h5 class="mt-2"><a href="single-product.html">CCTV camera</a></h5>
+                    <h5 class="mt-2"><a href="single-product.html">Камера видеонаблюдения</a></h5>
                     <span class="price text-primary fw-light mb-2"><s class="fs-5 fw-lighter text-muted">$600</s> $500</span>
                   </div>
                 </div>
@@ -969,7 +975,7 @@
     <section id="customers-reviews" class="position-relative">
       <div class="container">
         <div class="section-title overflow-hidden mb-4">
-          <h3 class="d-flex align-items-center">Customers reviews</h3>
+          <h3 class="d-flex align-items-center">Отзывы клиентов</h3>
         </div>
         <div class="position-absolute top-50 end-0 pe-0 pe-xxl-5 me-0 me-xxl-5 swiper-next testimonial-button-next">
           <svg class="chevron-forward-circle d-flex justify-content-center align-items-center border rounded-3 p-2" width="55" height="55">
@@ -985,7 +991,7 @@
           <div class="swiper-wrapper">
             <div class="swiper-slide">
               <div class="card position-relative text-left p-5 border rounded-3">
-                <blockquote>“I stumbled upon this tech store while searching for a new laptop, and I couldn't be happier with my experience! The staff was incredibly knowledgeable and guided me through the process of choosing the perfect device for my needs. Highly recommended!”</blockquote>
+                <blockquote>«Я нашёл этот магазин, когда искал новый ноутбук, и остался очень доволен! Сотрудники отлично разбираются в технике и помогли выбрать устройство под мои задачи. Очень рекомендую!»</blockquote>
                 <div class="rating text-primary">
                   <svg class="star star-fill">
                     <use xlink:href="#star-fill"></use>
@@ -1008,7 +1014,7 @@
             </div>
             <div class="swiper-slide">
               <div class="card position-relative text-left p-5 border rounded-3">
-                <blockquote>“This tech store is my go-to for all things tech! Whether it's a new smartphone, accessories, or even troubleshooting advice, they've always got me covered. The staff is friendly, and their expertise is unmatched. Trust me; you won't regret shopping here!”</blockquote>
+                <blockquote>«Этот магазин — мой выбор для всего, что связано с техникой! Новый смартфон, аксессуары или даже совет по настройке — здесь всегда помогут. Команда дружелюбная, а уровень экспертизы впечатляет. Покупками останетесь довольны!»</blockquote>
                 <div class="rating text-primary">
                   <svg class="star star-fill">
                     <use xlink:href="#star-fill"></use>
@@ -1031,7 +1037,7 @@
             </div>
             <div class="swiper-slide">
               <div class="card position-relative text-left p-5 border rounded-3">
-                <blockquote>“I recently purchased a smartwatch from this tech store, and I'm absolutely thrilled find the perfect fit with my purchase! Not only did they have an extensive find the perfect fit selection to choose from, but their team helped me find the perfect fit for my lifestyle.”</blockquote>
+                <blockquote>«Недавно купил здесь смарт-часы и остался в полном восторге! Выбор очень большой, а сотрудники помогли подобрать модель, которая идеально подошла моему образу жизни.»</blockquote>
                 <div class="rating text-primary">
                   <svg class="star star-fill">
                     <use xlink:href="#star-fill"></use>
@@ -1054,7 +1060,7 @@
             </div>
             <div class="swiper-slide">
               <div class="card position-relative text-left p-5 border rounded-3">
-                <blockquote>“I stumbled upon this tech store while searching for a new laptop, and I couldn't be happier with my experience! The staff was incredibly knowledgeable and guided me through the process of choosing the perfect device for my needs. Highly recommended!”</blockquote>
+                <blockquote>«Я нашёл этот магазин, когда искал новый ноутбук, и остался очень доволен! Сотрудники отлично разбираются в технике и помогли выбрать устройство под мои задачи. Очень рекомендую!»</blockquote>
                 <div class="rating text-primary">
                   <svg class="star star-fill">
                     <use xlink:href="#star-fill"></use>
@@ -1077,7 +1083,7 @@
             </div>
             <div class="swiper-slide">
               <div class="card position-relative text-left p-5 border rounded-3">
-                <blockquote>“I stumbled upon this tech store while searching for a new laptop, and I couldn't be happier with my experience! The staff was incredibly knowledgeable and guided me through the process of choosing the perfect device for my needs. Highly recommended!”</blockquote>
+                <blockquote>«Я нашёл этот магазин, когда искал новый ноутбук, и остался очень доволен! Сотрудники отлично разбираются в технике и помогли выбрать устройство под мои задачи. Очень рекомендую!»</blockquote>
                 <div class="rating text-primary">
                   <svg class="star star-fill">
                     <use xlink:href="#star-fill"></use>
@@ -1106,36 +1112,36 @@
     <section id="latest-posts" class="padding-large">
       <div class="container">
         <div class="section-title overflow-hidden mb-4">
-          <h3 class="d-flex align-items-center">Latest posts</h3>
+          <h3 class="d-flex align-items-center">Последние статьи</h3>
         </div>
         <div class="row">
           <div class="col-md-3 posts mb-4">
-            <a href="blog.html" class="btn rounded-0 py-0 px-2">Gadgets</a>
+            <a href="blog.html" class="btn rounded-0 py-0 px-2">Гаджеты</a>
             <img src="images/post-item1.jpg" alt="post image" class="img-fluid">
-            <h4 class="card-title mt-3 mb-2 text-uppercase text-dark"><a href="single-post.html">5 Must-Have Gadgets for the Modern Home</a></h4>
-            <p class="mb-2">Dive into the world of cutting-edge technology with our latest blog post, where we highlight five essential gadg</p>
-            <a class="text-decoration-underline" href="single-post.html">Read More</a>
+            <h4 class="card-title mt-3 mb-2 text-uppercase text-dark"><a href="single-post.html">5 обязательных гаджетов для современного дома</a></h4>
+            <p class="mb-2">Погрузитесь в мир передовых технологий: в этой статье мы рассказываем о пяти ключевых гаджетах для дома.</p>
+            <a class="text-decoration-underline" href="single-post.html">Читать далее</a>
           </div>
           <div class="col-md-3 posts mb-4">
-            <a href="blog.html" class="btn rounded-0 py-0 px-2">Phones</a>
+            <a href="blog.html" class="btn rounded-0 py-0 px-2">Телефоны</a>
             <img src="images/post-item2.jpg" alt="post image" class="img-fluid">
-            <h4 class="card-title mt-3 mb-2 text-uppercase text-dark"><a href="single-post.html">Eco-Friendly Innovations Making a Difference</a></h4>
-            <p class="mb-2">Explore the intersection of technology and sustainability in our latest blog post. Learn about the innovative</p>
-            <a class="text-decoration-underline" href="single-post.html">Read More</a>
+            <h4 class="card-title mt-3 mb-2 text-uppercase text-dark"><a href="single-post.html">Экологичные инновации, которые меняют мир</a></h4>
+            <p class="mb-2">Узнайте, как технологии и устойчивое развитие работают вместе, и какие решения уже помогают планете.</p>
+            <a class="text-decoration-underline" href="single-post.html">Читать далее</a>
           </div>
           <div class="col-md-3 posts mb-4">
-            <a href="blog.html" class="btn rounded-0 py-0 px-2">Tech</a>
+            <a href="blog.html" class="btn rounded-0 py-0 px-2">Технологии</a>
             <img src="images/post-item3.jpg" alt="post image" class="img-fluid">
-            <h4 class="card-title mt-3 mb-2 text-uppercase text-dark"><a href="single-post.html">The Future of Wearable Tech: Trends to Watch</a></h4>
-            <p class="mb-2">Stay ahead of the curve with our insightful look into the rapidly evolving landscape of wearable technology.</p>
-            <a class="text-decoration-underline" href="single-post.html">Read More</a>
+            <h4 class="card-title mt-3 mb-2 text-uppercase text-dark"><a href="single-post.html">Будущее носимых технологий: тренды, за которыми стоит следить</a></h4>
+            <p class="mb-2">Будьте на шаг впереди: разбираем, как стремительно развивается рынок носимой электроники.</p>
+            <a class="text-decoration-underline" href="single-post.html">Читать далее</a>
           </div>
           <div class="col-md-3 posts mb-4">
-            <a href="blog.html" class="btn rounded-0 py-0 px-2">Digital Watch</a>
+            <a href="blog.html" class="btn rounded-0 py-0 px-2">Цифровые часы</a>
             <img src="images/post-item4.jpg" alt="post image" class="img-fluid">
-            <h4 class="card-title mt-3 mb-2 text-uppercase text-dark"><a href="single-post.html">Top Apps and Tools for Remote Work</a></h4>
-            <p class="mb-2">In today's remote work environment, productivity is key. Discover the top apps and tools that can help you stay</p>
-            <a class="text-decoration-underline" href="single-post.html">Read More</a>
+            <h4 class="card-title mt-3 mb-2 text-uppercase text-dark"><a href="single-post.html">Лучшие приложения и инструменты для удалённой работы</a></h4>
+            <p class="mb-2">В условиях удалённой работы продуктивность особенно важна. Подборка сервисов, которые помогут оставаться эффективными.</p>
+            <a class="text-decoration-underline" href="single-post.html">Читать далее</a>
           </div>
         </div>
       </div>
@@ -1253,7 +1259,7 @@
               <div class="col-lg-3 col-sm-6 pb-3">
                 <div class="footer-menu">
                   <img src="images/main-logo.png" alt="logo" class="img-fluid mb-2">
-                  <p>Nisi, purus vitae, ultrices nunc. Sit ac sit suscipit hendrerit. Gravida massa volutpat aenean odio erat nullam fringilla.</p>
+                  <p>Подписывайтесь на нас в соцсетях, чтобы первыми узнавать о новинках и акциях.</p>
                   <div class="social-links">
                     <ul class="d-flex list-unstyled">
                       <li>
@@ -1297,53 +1303,53 @@
               </div>
               <div class="col-lg-2 col-sm-6 pb-3">
                 <div class="footer-menu text-uppercase">
-                  <h5 class="widget-title pb-2">Quick Links</h5>
+                  <h5 class="widget-title pb-2">Быстрые ссылки</h5>
                   <ul class="menu-list list-unstyled text-uppercase">
                     <li class="menu-item mb-1">
-                      <a href="#">Home</a>
+                      <a href="#">Главная</a>
                     </li>
                     <li class="menu-item mb-1">
-                      <a href="#">About</a>
+                      <a href="#">О нас</a>
                     </li>
                     <li class="menu-item mb-1">
-                      <a href="#">Shop</a>
+                      <a href="#">Магазин</a>
                     </li>
                     <li class="menu-item mb-1">
-                      <a href="#">Blogs</a>
+                      <a href="#">Блог</a>
                     </li>
                     <li class="menu-item mb-1">
-                      <a href="#">Contact</a>
+                      <a href="#">Контакты</a>
                     </li>
                   </ul>
                 </div>
               </div>
               <div class="col-lg-3 col-sm-6 pb-3">
                 <div class="footer-menu text-uppercase">
-                  <h5 class="widget-title pb-2">Help & Info Help</h5>
+                  <h5 class="widget-title pb-2">Помощь и информация</h5>
                   <ul class="menu-list list-unstyled">
                     <li class="menu-item mb-1">
-                      <a href="#">Track Your Order</a>
+                      <a href="#">Отследить заказ</a>
                     </li>
                     <li class="menu-item mb-1">
-                      <a href="#">Returns Policies</a>
+                      <a href="#">Условия возврата</a>
                     </li>
                     <li class="menu-item mb-1">
-                      <a href="#">Shipping + Delivery</a>
+                      <a href="#">Доставка и отправка</a>
                     </li>
                     <li class="menu-item mb-1">
-                      <a href="#">Contact Us</a>
+                      <a href="#">Свяжитесь с нами</a>
                     </li>
                     <li class="menu-item mb-1">
-                      <a href="#">Faqs</a>
+                      <a href="#">Частые вопросы</a>
                     </li>
                   </ul>
                 </div>
               </div>
               <div class="col-lg-3 col-sm-6 pb-3">
                 <div class="footer-menu contact-item">
-                  <h5 class="widget-title text-uppercase pb-2">Contact Us</h5>
-                  <p>Do you have any queries or suggestions? <a href="/cdn-cgi/l/email-protection#86" class="text-decoration-underline"><span class="__cf_email__" data-cfemail="5e27312b2c373038311e39333f3732703d3133">[email&#160;protected]</span></a></p>
-                  <p>If you need support? Just give us a call. <a href="#" class="text-decoration-underline">+55 111 222 333 44</a></p>
+                  <h5 class="widget-title text-uppercase pb-2">Свяжитесь с нами</h5>
+                  <p>Есть вопросы или предложения? <a href="/cdn-cgi/l/email-protection#86" class="text-decoration-underline"><span class="__cf_email__" data-cfemail="5e27312b2c373038311e39333f3732703d3133">[email&#160;protected]</span></a></p>
+                  <p>Нужна поддержка? Просто позвоните нам. <a href="#" class="text-decoration-underline">+55 111 222 333 44</a></p>
                 </div>
               </div>
             </div>
@@ -1357,14 +1363,14 @@
         <div class="d-flex flex-wrap justify-content-between">
           <div class="ship-and-payment d-flex gap-md-5 flex-wrap">
             <div class="shipping d-flex">
-              <p>We ship with:</p>
+              <p>Доставка:</p>
               <div class="card-wrap ps-2">
                 <img src="images/dhl.png" alt="visa">
                 <img src="images/shippingcard.png" alt="mastercard">
               </div>
             </div>
             <div class="payment-method d-flex">
-              <p>Payment options:</p>
+              <p>Способы оплаты:</p>
               <div class="card-wrap ps-2">
                 <img src="images/visa.jpg" alt="visa">
                 <img src="images/mastercard.jpg" alt="mastercard">
@@ -1373,7 +1379,7 @@
             </div>            
           </div>
           <div class="copyright">
-            <p>© Copyright 2024 ShopLite. HTML Template by <a href="https://templatesjungle.com/" target="_blank">TemplatesJungle</a>
+            <p>© 2024 ShopLite. HTML-шаблон от <a href="https://templatesjungle.com/" target="_blank">TemplatesJungle</a>
             </p>
           </div>
         </div>
@@ -1535,7 +1541,7 @@
         .applyKalmanFilter(true);
     });
 
-    // ── Вызывается при нажатии "Go to checkout" ───────────────
+    // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
     function finishExperiment(event) {
       const btn = event?.currentTarget || document.querySelector('button[onclick*="finishExperiment"]');
       if (btn) {
