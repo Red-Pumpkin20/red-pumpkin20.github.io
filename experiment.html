@@ -1134,6 +1134,11 @@
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
       webgazer
+        .showVideoPreview(false)
+        .showFaceOverlay(false)
+        .showFaceFeedbackBox(false)
+        .showPredictionPoints(false)
+        .applyKalmanFilter(false)
         .setGazeListener(function (data) {
           if (!data) return;
           const now = Date.now();
@@ -1168,13 +1173,6 @@
             console.log('📊 Точек собрано:', window._gazePoints.length);
         })
         .begin();
-
-      webgazer
-        .showVideoPreview(false)
-        .showFaceOverlay(false)
-        .showFaceFeedbackBox(false)
-        .showPredictionPoints(false)
-        .applyKalmanFilter(false);
     });
 
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
