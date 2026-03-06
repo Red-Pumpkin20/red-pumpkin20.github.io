@@ -1076,8 +1076,14 @@
       };
     }
 
-    function isPointInsideBanner(x, y) {
+    function isPointInsideBannerViewport(x, y) {
       const rect = window._bannerRectViewport;
+      if (!rect) return false;
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    }
+
+    function isPointInsideBannerPage(x, y) {
+      const rect = window._bannerRectPage;
       if (!rect) return false;
       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
@@ -1133,6 +1139,7 @@
           if (now - lastSample < SAMPLE_RATE_MS) return;
           lastSample = now;
           const view = getViewportMetrics();
+          updateBannerRect();
           const point = {
             x: Math.round(data.x),
             y: Math.round(data.y),
@@ -1148,7 +1155,9 @@
             dpr: view.dpr
           };
 
-          point.on_banner = isPointInsideBanner(point.x, point.y);
+          point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
+          point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
+          point.on_banner = point.on_banner_viewport || point.on_banner_page;
           if (point.on_banner) {
             window._bannerHits++;
           }
