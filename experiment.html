@@ -1022,7 +1022,9 @@
     const GOOGLE_FORM_URL   = 'https://forms.gle/FaTTjnU39ywQdZMSA';
     // ═══════════════════════════════════════════════════════════
 
-    const SAMPLE_RATE_MS = 100; // точка каждые 100 мс ≈ 10 точек/сек
+    const SAMPLE_RATE_MS = 33; // точка каждые ~33 мс ≈ 30 точек/сек
+    const SCROLL_SAMPLE_RATE_MS = 50; // записываем скролл до 20 раз/сек
+    const BANNER_RECT_REFRESH_MS = 120; // как часто принудительно обновлять AOI в gaze-loop
 
     window._bannerRectViewport = null;
     window._bannerRectPage = null;
@@ -1109,6 +1111,7 @@
       window._scrollEvents   = [];
       let lastSample         = 0;
       let lastScrollSample   = 0;
+      let lastRectRefresh    = 0;
 
       updateBannerRect();
       recordScrollEvent('init');
@@ -1120,15 +1123,11 @@
 
       window.addEventListener('scroll', function () {
         const now = Date.now();
-        if (now - lastScrollSample < SAMPLE_RATE_MS) return;
+        if (now - lastScrollSample < SCROLL_SAMPLE_RATE_MS) return;
         lastScrollSample = now;
         updateBannerRect();
         recordScrollEvent('scroll');
       }, { passive: true });
-
-      updateBannerRect();
-      window.addEventListener('resize', updateBannerRect);
-      window.addEventListener('scroll', updateBannerRect, { passive: true });
 
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
@@ -1139,7 +1138,10 @@
           if (now - lastSample < SAMPLE_RATE_MS) return;
           lastSample = now;
           const view = getViewportMetrics();
-          updateBannerRect();
+          if (now - lastRectRefresh >= BANNER_RECT_REFRESH_MS) {
+            updateBannerRect();
+            lastRectRefresh = now;
+          }
           const point = {
             x: Math.round(data.x),
             y: Math.round(data.y),
