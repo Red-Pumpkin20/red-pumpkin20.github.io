@@ -1187,11 +1187,11 @@
     });
 
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
-    function finishExperiment(event) {
+    async function finishExperiment(event) {
       const btn = event?.currentTarget || document.querySelector('button[onclick*="finishExperiment"]');
       if (btn) {
         btn.disabled = true;
-        btn.textContent = 'Отправка данных...';
+        btn.textContent = 'Отправка...';
       }
 
       const gazePoints = window._gazePoints || [];
@@ -1204,13 +1204,6 @@
         window.location.href = GOOGLE_FORM_URL;
         return;
       }
-
-      // ── Отправка через скрытую форму (надёжно работает с Google Apps Script) ────
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = GOOGLE_SCRIPT_URL;
-      form.target = 'gaze_submit_iframe'; // отправим в скрытый iframe
-      form.style.display = 'none';
 
       recordScrollEvent('finish');
 
@@ -1231,33 +1224,48 @@
         send_reason: 'checkout'
       };
 
-      Object.keys(fields).forEach(function(key) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = fields[key];
-        form.appendChild(input);
-      });
+      const body = new URLSearchParams(fields);
+      const FALLBACK_TIMEOUT_MS = 12000;
 
-      // Создаём скрытый iframe для отправки
-      let iframe = document.getElementById('gaze_submit_iframe');
-      if (!iframe) {
-        iframe = document.createElement('iframe');
-        iframe.id = 'gaze_submit_iframe';
-        iframe.name = 'gaze_submit_iframe';
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
+      try {
+        const fetchPromise = fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          body
+        }).then(function(response) {
+          return { type: 'response', response };
+        });
+
+        const timeoutPromise = new Promise(function(resolve) {
+          setTimeout(function() {
+            resolve({ type: 'timeout' });
+          }, FALLBACK_TIMEOUT_MS);
+        });
+
+        const result = await Promise.race([fetchPromise, timeoutPromise]);
+
+        if (result.type === 'response' && result.response.ok) {
+          console.log('✅ Данные успешно отправлены. Переход на Google Form.');
+          window.location.href = GOOGLE_FORM_URL;
+          return;
+        }
+
+        if (result.type === 'timeout') {
+          console.warn('⚠️ Сервер долго не отвечает. Выполняем fallback-переход через ' + (FALLBACK_TIMEOUT_MS / 1000) + ' сек.');
+          window.location.href = GOOGLE_FORM_URL;
+          return;
+        }
+
+        console.error('❌ Ошибка отправки: сервер вернул код', result.response.status);
+        alert('Не удалось отправить данные эксперимента. Пожалуйста, попробуйте ещё раз.');
+      } catch (error) {
+        console.error('❌ Ошибка отправки данных эксперимента:', error);
+        alert('Ошибка сети при отправке данных. Проверьте подключение и попробуйте снова.');
       }
 
-      document.body.appendChild(form);
-      form.submit();
-
-      console.log('✅ Данные отправлены. Переход на форму через 1 сек...');
-
-      // Переходим на Google Forms через секунду
-      setTimeout(function() {
-        window.location.href = GOOGLE_FORM_URL;
-      }, 1000);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Перейти к оформлению';
+      }
     }
    </script>
 
