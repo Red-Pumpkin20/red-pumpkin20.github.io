@@ -358,6 +358,11 @@
         const totalCalibrationPoints = 9;
         const calibrationDwellMs = 500;
 
+        function blockMouseMoveTraining(event) {
+            // Отключаем только обучение на mousemove, не трогая click-калибровку.
+            event.stopImmediatePropagation();
+        }
+
         function showStatus(message, type) {
             const statusEl = document.getElementById('calibration-status');
             statusEl.textContent = message;
@@ -378,9 +383,21 @@
             document.getElementById('calibration-section').style.display = 'block';
 
             showStatus('⏳ Инициализация камеры...', 'warning');
+            document.getElementById('start-calibration-btn').disabled = true;
+
+            // Используем штатное сохранение калибровки между intro.html и experiment.html
+            webgazer.saveDataAcrossSessions(true);
 
             // БЕЗ gaze listener - он не нужен для калибровки!
-            webgazer.begin();
+            Promise.resolve(webgazer.begin()).then(() => {
+                // Блокируем только mousemove для исключения "следования за мышью" в intro.
+                document.addEventListener('mousemove', blockMouseMoveTraining, true);
+                document.getElementById('start-calibration-btn').disabled = false;
+                showStatus('✅ Камера активна! Нажмите "Начать калибровку точек"', 'success');
+            }).catch((error) => {
+                console.error('❌ Ошибка запуска WebGazer во время калибровки:', error);
+                document.getElementById('start-calibration-btn').disabled = false;
+            });
 
             // Полностью скрываем всё визуальное - видео, сетку лица
             webgazer.showVideoPreview(false)
@@ -389,11 +406,6 @@
                     .showPredictionPoints(false)
                     .applyKalmanFilter(true);
 
-            webgazer.saveDataAcrossSessions(false);
-
-            setTimeout(() => {
-                showStatus('✅ Камера активна! Нажмите "Начать калибровку точек"', 'success');
-            }, 2000);
         }
 
         function startWebGazerCalibration() {
@@ -466,6 +478,7 @@
             });
 
             showStatus('Калибровка завершена успешно!', 'success');
+
             document.getElementById('proceed-btn').style.display = 'inline-block';
             document.getElementById('start-calibration-btn').textContent = 'Повторить калибровку';
             document.getElementById('start-calibration-btn').disabled = false;
@@ -483,6 +496,7 @@
         }
 
         window.addEventListener('beforeunload', function() {
+            document.removeEventListener('mousemove', blockMouseMoveTraining, true);
             if (typeof webgazer !== 'undefined') {
                 webgazer.end();
             }

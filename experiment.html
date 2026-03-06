@@ -1134,11 +1134,13 @@
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
       webgazer
+        // Загружаем калибровку из intro.html через штатное хранилище WebGazer
+        .saveDataAcrossSessions(true)
         .showVideoPreview(false)
         .showFaceOverlay(false)
         .showFaceFeedbackBox(false)
         .showPredictionPoints(false)
-        .applyKalmanFilter(false)
+        .applyKalmanFilter(true)
         .setGazeListener(function (data) {
           if (!data) return;
           const now = Date.now();
@@ -1172,7 +1174,16 @@
           if (window._gazePoints.length % 100 === 0)
             console.log('📊 Точек собрано:', window._gazePoints.length);
         })
-        .begin();
+        .begin()
+        .then(function () {
+          // Полностью отключаем обучение по мыши (click/move listeners)
+          if (typeof webgazer.removeMouseEventListeners === 'function') {
+            webgazer.removeMouseEventListeners();
+          }
+        })
+        .catch(function (error) {
+          console.error('❌ Ошибка запуска WebGazer:', error);
+        });
     });
 
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
