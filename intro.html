@@ -357,11 +357,6 @@
         let currentCalibrationPoint = 0;
         const totalCalibrationPoints = 9;
         const calibrationDwellMs = 500;
-        function blockMouseMoveTraining(event) {
-            // Блокируем только mousemove, чтобы WebGazer не обучался по траектории курсора.
-            event.stopImmediatePropagation();
-        }
-
         function showStatus(message, type) {
             const statusEl = document.getElementById('calibration-status');
             statusEl.textContent = message;
@@ -383,19 +378,15 @@
 
             showStatus('⏳ Инициализация камеры...', 'warning');
 
-            // Для межстраничного переноса калибровки используем штатное хранилище WebGazer
-            webgazer.saveDataAcrossSessions(true);
-
-            // Сбрасываем калибровку предыдущего пользователя перед новой сессией
-            const clearPromise = (typeof webgazer.clearData === 'function')
-                ? Promise.resolve(webgazer.clearData())
-                : Promise.resolve();
+            // Не загружаем/не сохраняем старые данные, чтобы избежать ошибок восстановления модели
+            webgazer.saveDataAcrossSessions(false);
 
             // БЕЗ gaze listener - он не нужен для калибровки!
-            clearPromise.then(() => {
-                // Регистрируем раньше webgazer moveListener, чтобы заблокировать обучение по движению мыши
-                document.addEventListener('mousemove', blockMouseMoveTraining, true);
-                return webgazer.begin();
+            Promise.resolve(webgazer.begin()).then(() => {
+                // Полностью отключаем встроенное обучение по мыши
+                if (typeof webgazer.removeMouseEventListeners === 'function') {
+                    webgazer.removeMouseEventListeners();
+                }
             }).catch((error) => {
                 console.error('❌ Ошибка запуска WebGazer во время калибровки:', error);
             });
@@ -500,7 +491,6 @@
         }
 
         window.addEventListener('beforeunload', function() {
-            document.removeEventListener('mousemove', blockMouseMoveTraining, true);
             if (typeof webgazer !== 'undefined') {
                 webgazer.end();
             }
