@@ -1112,6 +1112,14 @@
       window._gazePoints     = [];
       window._bannerHits     = 0;
       window._scrollEvents   = [];
+      window._gazePerf       = {
+        started_at: Date.now(),
+        last_report_at: Date.now(),
+        raw_samples: 0,
+        stored_samples: 0,
+        handler_ms_total: 0,
+        handler_ms_max: 0
+      };
       let lastSample         = 0;
       let lastScrollSample   = 0;
 
@@ -1131,9 +1139,36 @@
         recordScrollEvent('scroll');
       }, { passive: true });
 
+      function reportGazePerf(force) {
+        const perf = window._gazePerf;
+        if (!perf) return;
+        const now = Date.now();
+        const elapsedMs = now - perf.last_report_at;
+        if (!force && elapsedMs < 2000) return;
+        const rawHz = elapsedMs > 0 ? (perf.raw_samples * 1000) / elapsedMs : 0;
+        const storedHz = elapsedMs > 0 ? (perf.stored_samples * 1000) / elapsedMs : 0;
+        const avgHandlerMs = perf.raw_samples > 0 ? perf.handler_ms_total / perf.raw_samples : 0;
+        console.log(
+          '🧪 Gaze perf | raw: ' + rawHz.toFixed(1) +
+          ' Hz | stored: ' + storedHz.toFixed(1) +
+          ' Hz | handler avg/max: ' + avgHandlerMs.toFixed(2) + '/' + perf.handler_ms_max.toFixed(2) + ' ms'
+        );
+        perf.last_report_at = now;
+        perf.raw_samples = 0;
+        perf.stored_samples = 0;
+        perf.handler_ms_total = 0;
+        perf.handler_ms_max = 0;
+      }
+
+      function disableMouseTraining(reason) {
+        if (typeof webgazer.removeMouseEventListeners !== 'function') return;
+        webgazer.removeMouseEventListeners();
+        console.log('🖱️ Mouse training disabled (' + reason + ')');
+      }
+
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
-      webgazer
+      const configuredWebgazer = webgazer
         // Загружаем калибровку из intro.html через штатное хранилище WebGazer
         .saveDataAcrossSessions(true)
         .showVideoPreview(false)
@@ -1142,44 +1177,61 @@
         .showPredictionPoints(false)
         .applyKalmanFilter(true)
         .setGazeListener(function (data) {
-          if (!data) return;
-          const now = Date.now();
-          if (now - lastSample < SAMPLE_RATE_MS) return;
-          lastSample = now;
-          const view = getViewportMetrics();
-          updateBannerRect();
-          const point = {
-            x: Math.round(data.x),
-            y: Math.round(data.y),
-            t: now - window._sessionStart,
-            page_x: Math.round(data.x + view.scroll_x),
-            page_y: Math.round(data.y + view.scroll_y),
-            scroll_x: view.scroll_x,
-            scroll_y: view.scroll_y,
-            viewport_w: view.viewport_w,
-            viewport_h: view.viewport_h,
-            doc_w: view.doc_w,
-            doc_h: view.doc_h,
-            dpr: view.dpr
-          };
+          const handlerStart = performance.now();
+          try {
+            if (!data) return;
+            window._gazePerf.raw_samples++;
 
-          point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
-          point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
-          point.on_banner = point.on_banner_viewport || point.on_banner_page;
-          if (point.on_banner) {
-            window._bannerHits++;
+            const now = Date.now();
+            if (now - lastSample < SAMPLE_RATE_MS) return;
+            lastSample = now;
+
+            const view = getViewportMetrics();
+            const point = {
+              x: data.x,
+              y: data.y,
+              t: now - window._sessionStart,
+              page_x: data.x + view.scroll_x,
+              page_y: data.y + view.scroll_y,
+              scroll_x: view.scroll_x,
+              scroll_y: view.scroll_y,
+              viewport_w: view.viewport_w,
+              viewport_h: view.viewport_h,
+              doc_w: view.doc_w,
+              doc_h: view.doc_h,
+              dpr: view.dpr
+            };
+
+            point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
+            point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
+            point.on_banner = point.on_banner_viewport || point.on_banner_page;
+            if (point.on_banner) {
+              window._bannerHits++;
+            }
+
+            window._gazePoints.push(point);
+            window._gazePerf.stored_samples++;
+
+            if (window._gazePoints.length % 100 === 0)
+              console.log('📊 Точек собрано:', window._gazePoints.length);
+          } finally {
+            const handlerMs = performance.now() - handlerStart;
+            window._gazePerf.handler_ms_total += handlerMs;
+            if (handlerMs > window._gazePerf.handler_ms_max) {
+              window._gazePerf.handler_ms_max = handlerMs;
+            }
+            reportGazePerf(false);
           }
+        });
 
-          window._gazePoints.push(point);
-          if (window._gazePoints.length % 100 === 0)
-            console.log('📊 Точек собрано:', window._gazePoints.length);
-        })
-        .begin()
+      disableMouseTraining('pre-begin');
+      const beginPromise = configuredWebgazer.begin();
+      disableMouseTraining('post-begin-call');
+
+      beginPromise
         .then(function () {
-          // Полностью отключаем обучение по мыши (click/move listeners)
-          if (typeof webgazer.removeMouseEventListeners === 'function') {
-            webgazer.removeMouseEventListeners();
-          }
+          disableMouseTraining('begin-resolved');
+          reportGazePerf(true);
         })
         .catch(function (error) {
           console.error('❌ Ошибка запуска WebGazer:', error);
