@@ -1024,7 +1024,6 @@
 
     const SAMPLE_RATE_MS = 33; // точка каждые ~33 мс ≈ 30 точек/сек
     const SCROLL_SAMPLE_RATE_MS = 50; // записываем скролл до 20 раз/сек
-    const BANNER_RECT_REFRESH_MS = 120; // как часто принудительно обновлять AOI в gaze-loop
     const BANNER_AOI_PADDING_PX = 24; // дополнительная зона AOI вокруг баннера
 
     window._bannerRectViewport = null;
@@ -1115,7 +1114,6 @@
       window._scrollEvents   = [];
       let lastSample         = 0;
       let lastScrollSample   = 0;
-      let lastRectRefresh    = 0;
 
       updateBannerRect();
       recordScrollEvent('init');
@@ -1142,10 +1140,7 @@
           if (now - lastSample < SAMPLE_RATE_MS) return;
           lastSample = now;
           const view = getViewportMetrics();
-          if (now - lastRectRefresh >= BANNER_RECT_REFRESH_MS) {
-            updateBannerRect();
-            lastRectRefresh = now;
-          }
+          updateBannerRect();
           const point = {
             x: Math.round(data.x),
             y: Math.round(data.y),
@@ -1179,7 +1174,7 @@
         .showFaceOverlay(false)
         .showFaceFeedbackBox(false)
         .showPredictionPoints(false)
-        .applyKalmanFilter(true);
+        .applyKalmanFilter(false);
     });
 
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
