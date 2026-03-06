@@ -357,6 +357,10 @@
         let currentCalibrationPoint = 0;
         const totalCalibrationPoints = 9;
         const calibrationDwellMs = 500;
+        function blockMouseMoveTraining(event) {
+            // Блокируем только mousemove: click остаётся для штатного сохранения калибровки WebGazer.
+            event.stopImmediatePropagation();
+        }
         function showStatus(message, type) {
             const statusEl = document.getElementById('calibration-status');
             statusEl.textContent = message;
@@ -388,10 +392,9 @@
 
             // БЕЗ gaze listener - он не нужен для калибровки!
             clearPromise.then(() => webgazer.begin()).then(() => {
-                // Полностью отключаем встроенное обучение по мыши
-                if (typeof webgazer.removeMouseEventListeners === 'function') {
-                    webgazer.removeMouseEventListeners();
-                }
+                // Отключаем только обучение по движениям мыши,
+                // но оставляем click-listener для встроенного persistance калибровки.
+                document.addEventListener('mousemove', blockMouseMoveTraining, true);
             }).catch((error) => {
                 console.error('❌ Ошибка запуска WebGazer во время калибровки:', error);
             });
@@ -496,6 +499,7 @@
         }
 
         window.addEventListener('beforeunload', function() {
+            document.removeEventListener('mousemove', blockMouseMoveTraining, true);
             if (typeof webgazer !== 'undefined') {
                 webgazer.end();
             }
