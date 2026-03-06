@@ -1022,7 +1022,9 @@
     const GOOGLE_FORM_URL   = 'https://forms.gle/FaTTjnU39ywQdZMSA';
     // ═══════════════════════════════════════════════════════════
 
-    const SAMPLE_RATE_MS = 100; // точка каждые 100 мс ≈ 10 точек/сек
+    const SAMPLE_RATE_MS = 33; // точка каждые ~33 мс ≈ 30 точек/сек
+    const SCROLL_SAMPLE_RATE_MS = 50; // записываем скролл до 20 раз/сек
+    const BANNER_AOI_PADDING_PX = 24; // дополнительная зона AOI вокруг баннера
 
     window._bannerRectViewport = null;
     window._bannerRectPage = null;
@@ -1058,26 +1060,35 @@
       const bannerEl = document.getElementById('research-banner');
       if (!bannerEl) return;
       const rect = bannerEl.getBoundingClientRect();
+      const pad = BANNER_AOI_PADDING_PX;
       window._bannerRectViewport = {
-        left: Math.round(rect.left),
-        top: Math.round(rect.top),
-        right: Math.round(rect.right),
-        bottom: Math.round(rect.bottom),
-        width: Math.round(rect.width),
-        height: Math.round(rect.height)
+        left: Math.round(rect.left - pad),
+        top: Math.round(rect.top - pad),
+        right: Math.round(rect.right + pad),
+        bottom: Math.round(rect.bottom + pad),
+        width: Math.round(rect.width + pad * 2),
+        height: Math.round(rect.height + pad * 2),
+        padding_px: pad
       };
       window._bannerRectPage = {
-        left: Math.round(rect.left + window.scrollX),
-        top: Math.round(rect.top + window.scrollY),
-        right: Math.round(rect.right + window.scrollX),
-        bottom: Math.round(rect.bottom + window.scrollY),
-        width: Math.round(rect.width),
-        height: Math.round(rect.height)
+        left: Math.round(rect.left + window.scrollX - pad),
+        top: Math.round(rect.top + window.scrollY - pad),
+        right: Math.round(rect.right + window.scrollX + pad),
+        bottom: Math.round(rect.bottom + window.scrollY + pad),
+        width: Math.round(rect.width + pad * 2),
+        height: Math.round(rect.height + pad * 2),
+        padding_px: pad
       };
     }
 
-    function isPointInsideBanner(x, y) {
+    function isPointInsideBannerViewport(x, y) {
       const rect = window._bannerRectViewport;
+      if (!rect) return false;
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    }
+
+    function isPointInsideBannerPage(x, y) {
+      const rect = window._bannerRectPage;
       if (!rect) return false;
       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
@@ -1114,25 +1125,27 @@
 
       window.addEventListener('scroll', function () {
         const now = Date.now();
-        if (now - lastScrollSample < SAMPLE_RATE_MS) return;
+        if (now - lastScrollSample < SCROLL_SAMPLE_RATE_MS) return;
         lastScrollSample = now;
         updateBannerRect();
         recordScrollEvent('scroll');
       }, { passive: true });
 
-      updateBannerRect();
-      window.addEventListener('resize', updateBannerRect);
-      window.addEventListener('scroll', updateBannerRect, { passive: true });
-
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
       webgazer
+        .showVideoPreview(false)
+        .showFaceOverlay(false)
+        .showFaceFeedbackBox(false)
+        .showPredictionPoints(false)
+        .applyKalmanFilter(false)
         .setGazeListener(function (data) {
           if (!data) return;
           const now = Date.now();
           if (now - lastSample < SAMPLE_RATE_MS) return;
           lastSample = now;
           const view = getViewportMetrics();
+          updateBannerRect();
           const point = {
             x: Math.round(data.x),
             y: Math.round(data.y),
@@ -1148,7 +1161,9 @@
             dpr: view.dpr
           };
 
-          point.on_banner = isPointInsideBanner(point.x, point.y);
+          point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
+          point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
+          point.on_banner = point.on_banner_viewport || point.on_banner_page;
           if (point.on_banner) {
             window._bannerHits++;
           }
@@ -1158,13 +1173,6 @@
             console.log('📊 Точек собрано:', window._gazePoints.length);
         })
         .begin();
-
-      webgazer
-        .showVideoPreview(false)
-        .showFaceOverlay(false)
-        .showFaceFeedbackBox(false)
-        .showPredictionPoints(false)
-        .applyKalmanFilter(true);
     });
 
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
