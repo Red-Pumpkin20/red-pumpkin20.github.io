@@ -357,6 +357,12 @@
         let currentCalibrationPoint = 0;
         const totalCalibrationPoints = 9;
         const calibrationDwellMs = 500;
+
+        function blockMouseMoveTraining(event) {
+            // Отключаем только обучение на mousemove, не трогая click-калибровку.
+            event.stopImmediatePropagation();
+        }
+
         function showStatus(message, type) {
             const statusEl = document.getElementById('calibration-status');
             statusEl.textContent = message;
@@ -384,8 +390,8 @@
 
             // БЕЗ gaze listener - он не нужен для калибровки!
             Promise.resolve(webgazer.begin()).then(() => {
-                // В intro оставляем штатные listeners WebGazer,
-                // чтобы калибровочные клики гарантированно сохранялись во внутреннюю модель.
+                // Блокируем только mousemove для исключения "следования за мышью" в intro.
+                document.addEventListener('mousemove', blockMouseMoveTraining, true);
                 document.getElementById('start-calibration-btn').disabled = false;
                 showStatus('✅ Камера активна! Нажмите "Начать калибровку точек"', 'success');
             }).catch((error) => {
@@ -490,6 +496,7 @@
         }
 
         window.addEventListener('beforeunload', function() {
+            document.removeEventListener('mousemove', blockMouseMoveTraining, true);
             if (typeof webgazer !== 'undefined') {
                 webgazer.end();
             }
