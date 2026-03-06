@@ -378,11 +378,16 @@
 
             showStatus('⏳ Инициализация камеры...', 'warning');
 
-            // Не загружаем/не сохраняем старые данные, чтобы избежать ошибок восстановления модели
-            webgazer.saveDataAcrossSessions(false);
+            // Используем штатное сохранение калибровки между intro.html и experiment.html
+            webgazer.saveDataAcrossSessions(true);
+
+            // Перед новой калибровкой очищаем данные прошлых сессий
+            const clearPromise = (typeof webgazer.clearData === 'function')
+                ? Promise.resolve(webgazer.clearData())
+                : Promise.resolve();
 
             // БЕЗ gaze listener - он не нужен для калибровки!
-            Promise.resolve(webgazer.begin()).then(() => {
+            clearPromise.then(() => webgazer.begin()).then(() => {
                 // Полностью отключаем встроенное обучение по мыши
                 if (typeof webgazer.removeMouseEventListeners === 'function') {
                     webgazer.removeMouseEventListeners();

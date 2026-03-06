@@ -1134,8 +1134,8 @@
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
       webgazer
-        // Не используем восстановление модели между сессиями: это устраняет DOMException на setData
-        .saveDataAcrossSessions(false)
+        // Загружаем калибровку из intro.html через штатное хранилище WebGazer
+        .saveDataAcrossSessions(true)
         .showVideoPreview(false)
         .showFaceOverlay(false)
         .showFaceFeedbackBox(false)
