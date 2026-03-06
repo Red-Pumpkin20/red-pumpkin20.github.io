@@ -357,7 +357,10 @@
         let currentCalibrationPoint = 0;
         const totalCalibrationPoints = 9;
         const calibrationDwellMs = 500;
-        const calibrationDataStorageKey = 'webgazerCalibrationData';
+        function blockMouseMoveTraining(event) {
+            // Блокируем только mousemove, чтобы WebGazer не обучался по траектории курсора.
+            event.stopImmediatePropagation();
+        }
 
         function showStatus(message, type) {
             const statusEl = document.getElementById('calibration-status');
@@ -380,12 +383,19 @@
 
             showStatus('⏳ Инициализация камеры...', 'warning');
 
+            // Для межстраничного переноса калибровки используем штатное хранилище WebGazer
+            webgazer.saveDataAcrossSessions(true);
+
+            // Сбрасываем калибровку предыдущего пользователя перед новой сессией
+            const clearPromise = (typeof webgazer.clearData === 'function')
+                ? Promise.resolve(webgazer.clearData())
+                : Promise.resolve();
+
             // БЕЗ gaze listener - он не нужен для калибровки!
-            Promise.resolve(webgazer.begin()).then(() => {
-                // Полностью отключаем автосбор обучающих точек по мыши
-                if (typeof webgazer.removeMouseEventListeners === 'function') {
-                    webgazer.removeMouseEventListeners();
-                }
+            clearPromise.then(() => {
+                // Регистрируем раньше webgazer moveListener, чтобы заблокировать обучение по движению мыши
+                document.addEventListener('mousemove', blockMouseMoveTraining, true);
+                return webgazer.begin();
             }).catch((error) => {
                 console.error('❌ Ошибка запуска WebGazer во время калибровки:', error);
             });
@@ -396,9 +406,6 @@
                     .showFaceFeedbackBox(false)
                     .showPredictionPoints(false)
                     .applyKalmanFilter(true);
-
-            // Калибровку переносим вручную через sessionStorage
-            webgazer.saveDataAcrossSessions(false);
 
             setTimeout(() => {
                 showStatus('✅ Камера активна! Нажмите "Начать калибровку точек"', 'success');
@@ -476,20 +483,6 @@
 
             showStatus('Калибровка завершена успешно!', 'success');
 
-            // Сохраняем обучающие данные регрессии для experiment.html
-            try {
-                const regs = (typeof webgazer.getRegression === 'function') ? webgazer.getRegression() : [];
-                const calibrationData = regs && regs[0] && typeof regs[0].getData === 'function'
-                    ? regs[0].getData()
-                    : null;
-
-                if (calibrationData) {
-                    sessionStorage.setItem(calibrationDataStorageKey, JSON.stringify(calibrationData));
-                }
-            } catch (error) {
-                console.warn('Не удалось сохранить калибровочные данные:', error);
-            }
-
             document.getElementById('proceed-btn').style.display = 'inline-block';
             document.getElementById('start-calibration-btn').textContent = 'Повторить калибровку';
             document.getElementById('start-calibration-btn').disabled = false;
@@ -507,6 +500,7 @@
         }
 
         window.addEventListener('beforeunload', function() {
+            document.removeEventListener('mousemove', blockMouseMoveTraining, true);
             if (typeof webgazer !== 'undefined') {
                 webgazer.end();
             }

@@ -1025,7 +1025,6 @@
     const SAMPLE_RATE_MS = 33; // точка каждые ~33 мс ≈ 30 точек/сек
     const SCROLL_SAMPLE_RATE_MS = 50; // записываем скролл до 20 раз/сек
     const BANNER_AOI_PADDING_PX = 24; // дополнительная зона AOI вокруг баннера
-    const CALIBRATION_DATA_STORAGE_KEY = 'webgazerCalibrationData';
 
     window._bannerRectViewport = null;
     window._bannerRectPage = null;
@@ -1107,16 +1106,6 @@
         return;
       }
 
-      let storedCalibrationData = null;
-      try {
-        const rawCalibrationData = sessionStorage.getItem(CALIBRATION_DATA_STORAGE_KEY);
-        if (rawCalibrationData) {
-          storedCalibrationData = JSON.parse(rawCalibrationData);
-        }
-      } catch (error) {
-        console.warn('⚠️ Не удалось прочитать калибровочные данные из sessionStorage:', error);
-      }
-
       // Уникальный ID участника
       window._participantId  = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       window._sessionStart   = Date.now();
@@ -1145,6 +1134,7 @@
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
       webgazer
+        .saveDataAcrossSessions(true)
         .showVideoPreview(false)
         .showFaceOverlay(false)
         .showFaceFeedbackBox(false)
@@ -1188,15 +1178,6 @@
           // Полностью отключаем обучение по мыши (click/move listeners)
           if (typeof webgazer.removeMouseEventListeners === 'function') {
             webgazer.removeMouseEventListeners();
-          }
-
-          // Восстанавливаем калибровку, собранную на intro.html
-          if (storedCalibrationData) {
-            const regs = (typeof webgazer.getRegression === 'function') ? webgazer.getRegression() : [];
-            if (regs && regs[0] && typeof regs[0].setData === 'function') {
-              regs[0].setData(storedCalibrationData);
-              console.log('✅ Калибровочные данные восстановлены из intro.html');
-            }
           }
         })
         .catch(function (error) {
