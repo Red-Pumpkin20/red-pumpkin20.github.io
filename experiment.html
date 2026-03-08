@@ -1025,6 +1025,7 @@
     const SAMPLE_RATE_MS = 33; // точка каждые ~33 мс ≈ 30 точек/сек
     const SCROLL_SAMPLE_RATE_MS = 50; // записываем скролл до 20 раз/сек
     const BANNER_AOI_PADDING_PX = 24; // дополнительная зона AOI вокруг баннера
+    const GAZE_CHUNK_SIZE = 250; // отправляем gaze-данные частями, чтобы не упираться в лимиты Apps Script
 
     window._bannerRectViewport = null;
     window._bannerRectPage = null;
@@ -1186,78 +1187,96 @@
         });
     });
 
+    function splitIntoChunks(items, chunkSize) {
+      const chunks = [];
+      for (let i = 0; i < items.length; i += chunkSize) {
+        chunks.push(items.slice(i, i + chunkSize));
+      }
+      return chunks;
+    }
+
+    async function postToGoogleScript(fields) {
+      const body = new URLSearchParams();
+      Object.keys(fields).forEach(function(key) {
+        body.append(key, String(fields[key]));
+      });
+
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: body
+      });
+    }
+
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
-    function finishExperiment(event) {
+    async function finishExperiment(event) {
       const btn = event?.currentTarget || document.querySelector('button[onclick*="finishExperiment"]');
       if (btn) {
         btn.disabled = true;
         btn.textContent = 'Отправка данных...';
       }
 
-      const gazePoints = window._gazePoints || [];
-      const sessionStart = window._sessionStart || Date.now();
-      const participantId = window._participantId || 'unknown';
+      try {
+        const gazePoints = window._gazePoints || [];
+        const sessionStart = window._sessionStart || Date.now();
+        const participantId = window._participantId || 'unknown';
 
-      console.log('🏁 Эксперимент завершён. Точек: ' + gazePoints.length);
+        console.log('🏁 Эксперимент завершён. Точек: ' + gazePoints.length);
+        recordScrollEvent('finish');
 
-      if (gazePoints.length === 0) {
-        window.location.href = GOOGLE_FORM_URL;
-        return;
+        const chunks = splitIntoChunks(gazePoints, GAZE_CHUNK_SIZE);
+        const chunksTotal = chunks.length;
+        const commonFields = {
+          participant_id: participantId,
+          date: new Date(sessionStart).toLocaleString('ru-RU'),
+          duration_sec: Math.round((Date.now() - sessionStart) / 1000),
+          points_count: gazePoints.length,
+          screen_w: window.screen.width,
+          screen_h: window.screen.height,
+          device_pixel_ratio: window.devicePixelRatio || 1,
+          user_agent: navigator.userAgent,
+          scroll_events: JSON.stringify(window._scrollEvents || []),
+          banner_rect_viewport: JSON.stringify(window._bannerRectViewport || {}),
+          banner_rect_page: JSON.stringify(window._bannerRectPage || {}),
+          banner_hits: window._bannerHits || 0
+        };
+
+        for (let i = 0; i < chunksTotal; i++) {
+          const chunk = chunks[i];
+          const chunkJson = JSON.stringify(chunk);
+          const chunkSizeBytes = chunkJson.length;
+
+          console.log(`📦 Чанк ${i + 1}/${chunksTotal}: ${chunk.length} точек, ${chunkSizeBytes} символов JSON`);
+
+          await postToGoogleScript({
+            ...commonFields,
+            chunk_index: i,
+            chunks_total: chunksTotal,
+            gaze_chunk: chunkJson,
+            send_reason: 'checkout_chunk'
+          });
+        }
+
+        await postToGoogleScript({
+          ...commonFields,
+          chunk_index: chunksTotal,
+          chunks_total: chunksTotal,
+          gaze_chunk: '[]',
+          send_reason: 'checkout_complete'
+        });
+
+        console.log('✅ Все чанки и финальный маркер отправлены. Переход на форму через 1 сек...');
+
+        setTimeout(function() {
+          window.location.href = GOOGLE_FORM_URL;
+        }, 1000);
+      } catch (error) {
+        console.error('❌ Ошибка отправки gaze-данных:', error);
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Перейти к оформлению';
+        }
       }
-
-      // ── Отправка через скрытую форму (надёжно работает с Google Apps Script) ────
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = GOOGLE_SCRIPT_URL;
-      form.target = 'gaze_submit_iframe'; // отправим в скрытый iframe
-      form.style.display = 'none';
-
-      recordScrollEvent('finish');
-
-      const fields = {
-        participant_id: participantId,
-        date: new Date(sessionStart).toLocaleString('ru-RU'),
-        duration_sec: Math.round((Date.now() - sessionStart) / 1000),
-        points_count: gazePoints.length,
-        screen_w: window.screen.width,
-        screen_h: window.screen.height,
-        device_pixel_ratio: window.devicePixelRatio || 1,
-        user_agent: navigator.userAgent,
-        scroll_events: JSON.stringify(window._scrollEvents || []),
-        banner_rect_viewport: JSON.stringify(window._bannerRectViewport || {}),
-        banner_rect_page: JSON.stringify(window._bannerRectPage || {}),
-        banner_hits: window._bannerHits || 0,
-        gaze_data: JSON.stringify(gazePoints),
-        send_reason: 'checkout'
-      };
-
-      Object.keys(fields).forEach(function(key) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = fields[key];
-        form.appendChild(input);
-      });
-
-      // Создаём скрытый iframe для отправки
-      let iframe = document.getElementById('gaze_submit_iframe');
-      if (!iframe) {
-        iframe = document.createElement('iframe');
-        iframe.id = 'gaze_submit_iframe';
-        iframe.name = 'gaze_submit_iframe';
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-      }
-
-      document.body.appendChild(form);
-      form.submit();
-
-      console.log('✅ Данные отправлены. Переход на форму через 1 сек...');
-
-      // Переходим на Google Forms через секунду
-      setTimeout(function() {
-        window.location.href = GOOGLE_FORM_URL;
-      }, 1000);
     }
    </script>
 
