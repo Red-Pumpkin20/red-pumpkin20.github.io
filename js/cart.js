@@ -76,15 +76,21 @@
   }
 
   function openCartDropdown() {
-    var toggle = document.querySelector('.cart-dropdown .dropdown-toggle');
-    if (!toggle) return;
+    var cartDropdown = document.querySelector('.cart-dropdown');
+    var toggle = cartDropdown && cartDropdown.querySelector('.dropdown-toggle');
+    var menu = cartDropdown && cartDropdown.querySelector('.dropdown-menu');
+    if (!toggle || !menu) return;
 
-    if (window.bootstrap && window.bootstrap.Dropdown) {
-      window.bootstrap.Dropdown.getOrCreateInstance(toggle).show();
-      return;
-    }
+    setTimeout(function () {
+      if (window.bootstrap && window.bootstrap.Dropdown) {
+        window.bootstrap.Dropdown.getOrCreateInstance(toggle).show();
+        return;
+      }
 
-    toggle.click();
+      cartDropdown.classList.add('show');
+      menu.classList.add('show');
+      toggle.setAttribute('aria-expanded', 'true');
+    }, 0);
   }
 
   function addToCart(product) {
