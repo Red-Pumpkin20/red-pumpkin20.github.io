@@ -88,6 +88,7 @@
     menu.style.transform = '';
     menu.style.margin = '';
     menu.style.width = '';
+    menu.style.minWidth = '';
     menu.style.maxWidth = '';
     menu.style.zIndex = '';
   }
@@ -107,16 +108,15 @@
       return;
     }
 
-    var originalWidth = menu.getBoundingClientRect().width;
-
     menu.style.position = 'fixed';
     menu.style.top = '16px';
     menu.style.left = 'auto';
     menu.style.right = '16px';
     menu.style.transform = 'none';
     menu.style.margin = '0';
-    menu.style.width = Math.round(originalWidth) + 'px';
-    menu.style.maxWidth = 'calc(100vw - 24px)';
+    menu.style.width = '360px';
+    menu.style.minWidth = '280px';
+    menu.style.maxWidth = 'calc(100vw - 32px)';
     menu.style.zIndex = '1080';
   }
 
