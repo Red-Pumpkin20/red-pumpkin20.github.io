@@ -75,6 +75,51 @@
     renderCartCounters();
   }
 
+  function isElementInViewport(element) {
+    var rect = element.getBoundingClientRect();
+    return rect.bottom > 0 && rect.top < window.innerHeight;
+  }
+
+  function clearFloatingCartMenuStyles(menu) {
+    menu.style.position = '';
+    menu.style.top = '';
+    menu.style.left = '';
+    menu.style.right = '';
+    menu.style.transform = '';
+    menu.style.margin = '';
+    menu.style.width = '';
+    menu.style.minWidth = '';
+    menu.style.maxWidth = '';
+    menu.style.zIndex = '';
+  }
+
+  function openCartDropdown() {
+    var cartDropdown = document.querySelector('.cart-dropdown');
+    var toggle = cartDropdown && cartDropdown.querySelector('.dropdown-toggle');
+    var menu = cartDropdown && cartDropdown.querySelector('.dropdown-menu');
+    if (!toggle || !menu) return;
+
+    cartDropdown.classList.add('show');
+    menu.classList.add('show');
+    toggle.setAttribute('aria-expanded', 'true');
+
+    if (isElementInViewport(toggle)) {
+      clearFloatingCartMenuStyles(menu);
+      return;
+    }
+
+    menu.style.position = 'fixed';
+    menu.style.top = '16px';
+    menu.style.left = 'auto';
+    menu.style.right = '16px';
+    menu.style.transform = 'none';
+    menu.style.margin = '0';
+    menu.style.width = '360px';
+    menu.style.minWidth = '280px';
+    menu.style.maxWidth = 'calc(100vw - 32px)';
+    menu.style.zIndex = '1080';
+  }
+
   function addToCart(product) {
     var existing = cartState.items.find(function (item) {
       return item.id === product.id;
@@ -114,5 +159,6 @@
     var product = getProductFromDataset(button.dataset);
     addToCart(product);
     renderCartUI();
+    openCartDropdown();
   });
 })();
