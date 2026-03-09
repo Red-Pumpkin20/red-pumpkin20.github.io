@@ -75,6 +75,18 @@
     renderCartCounters();
   }
 
+  function openCartDropdown() {
+    var toggle = document.querySelector('.cart-dropdown .dropdown-toggle');
+    if (!toggle) return;
+
+    if (window.bootstrap && window.bootstrap.Dropdown) {
+      window.bootstrap.Dropdown.getOrCreateInstance(toggle).show();
+      return;
+    }
+
+    toggle.click();
+  }
+
   function addToCart(product) {
     var existing = cartState.items.find(function (item) {
       return item.id === product.id;
@@ -114,5 +126,6 @@
     var product = getProductFromDataset(button.dataset);
     addToCart(product);
     renderCartUI();
+    openCartDropdown();
   });
 })();
