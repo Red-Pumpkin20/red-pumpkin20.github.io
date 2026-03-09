@@ -81,15 +81,19 @@
     var menu = cartDropdown && cartDropdown.querySelector('.dropdown-menu');
     if (!toggle || !menu) return;
 
+    var scrollX = window.scrollX || window.pageXOffset || 0;
+    var scrollY = window.scrollY || window.pageYOffset || 0;
+
     setTimeout(function () {
       if (window.bootstrap && window.bootstrap.Dropdown) {
         window.bootstrap.Dropdown.getOrCreateInstance(toggle).show();
-        return;
+      } else {
+        cartDropdown.classList.add('show');
+        menu.classList.add('show');
+        toggle.setAttribute('aria-expanded', 'true');
       }
 
-      cartDropdown.classList.add('show');
-      menu.classList.add('show');
-      toggle.setAttribute('aria-expanded', 'true');
+      window.scrollTo(scrollX, scrollY);
     }, 0);
   }
 
