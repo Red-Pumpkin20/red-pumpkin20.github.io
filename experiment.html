@@ -1004,6 +1004,7 @@
         </div>
     
    <script src="webgazer.js"></script>
+   <script src="js/telemetry.js"></script>
 
    <script>
     // ═══════════════════════════════════════════════════════════
@@ -1087,6 +1088,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+      telemetryLogger.log('page_loaded');
 
       if (!sessionStorage.getItem('calibrationComplete')) {
         alert('Сначала пройдите калибровку!');
@@ -1095,12 +1097,14 @@
       }
 
       if (!window.webgazer) {
+        telemetryLogger.log('webgazer_begin_fail', { message: 'webgazer_not_loaded' });
         console.error('❌ WebGazer не загрузился');
         return;
       }
 
       // Уникальный ID участника
-      window._participantId  = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      window._participantId  = sessionStorage.getItem('participantId') || ('p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
+      telemetryLogger.setParticipantId(window._participantId);
       window._sessionStart   = Date.now();
       window._gazePoints     = [];
       window._bannerHits     = 0;
@@ -1126,6 +1130,8 @@
 
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
+      telemetryLogger.log('webgazer_begin_start');
+
       webgazer
         // Загружаем калибровку из intro.html через штатное хранилище WebGazer
         .saveDataAcrossSessions(true)
@@ -1136,6 +1142,10 @@
         .applyKalmanFilter(true)
         .setGazeListener(function (data) {
           if (!data) return;
+          if (!window._firstGazePointLogged) {
+            window._firstGazePointLogged = true;
+            telemetryLogger.log('first_gaze_point');
+          }
           const now = Date.now();
           if (now - lastSample < SAMPLE_RATE_MS) return;
           lastSample = now;
@@ -1169,12 +1179,14 @@
         })
         .begin()
         .then(function () {
+          telemetryLogger.log('webgazer_begin_ok');
           // Полностью отключаем обучение по мыши (click/move listeners)
           if (typeof webgazer.removeMouseEventListeners === 'function') {
             webgazer.removeMouseEventListeners();
           }
         })
         .catch(function (error) {
+          telemetryLogger.log('webgazer_begin_fail', { message: error && error.message ? error.message : String(error) });
           console.error('❌ Ошибка запуска WebGazer:', error);
         });
     });
@@ -1188,6 +1200,7 @@
       }
 
       const gazePoints = window._gazePoints || [];
+      telemetryLogger.log('finish_clicked', { points_count: gazePoints.length });
       const sessionStart = window._sessionStart || Date.now();
       const participantId = window._participantId || 'unknown';
 
@@ -1221,6 +1234,7 @@
       const FALLBACK_TIMEOUT_MS = 12000;
 
       try {
+        telemetryLogger.log('send_start', { points_count: gazePoints.length });
         const fetchPromise = fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST',
           body
@@ -1237,20 +1251,24 @@
         const result = await Promise.race([fetchPromise, timeoutPromise]);
 
         if (result.type === 'response' && result.response.ok) {
+          telemetryLogger.log('send_ok');
           console.log('✅ Данные успешно отправлены. Переход на Google Form.');
           window.location.href = GOOGLE_FORM_URL;
           return;
         }
 
         if (result.type === 'timeout') {
+          telemetryLogger.log('send_timeout');
           console.warn('⚠️ Сервер долго не отвечает. Выполняем fallback-переход через ' + (FALLBACK_TIMEOUT_MS / 1000) + ' сек.');
           window.location.href = GOOGLE_FORM_URL;
           return;
         }
 
+        telemetryLogger.log('send_fail', { status: result.response.status });
         console.error('❌ Ошибка отправки: сервер вернул код', result.response.status);
         alert('Не удалось отправить данные эксперимента. Пожалуйста, попробуйте ещё раз.');
       } catch (error) {
+        telemetryLogger.log('send_fail', { message: error && error.message ? error.message : String(error) });
         console.error('❌ Ошибка отправки данных эксперимента:', error);
         alert('Ошибка сети при отправке данных. Проверьте подключение и попробуйте снова.');
       }
