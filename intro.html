@@ -356,7 +356,9 @@
         let calibrationPoints = [];
         let currentCalibrationPoint = 0;
         const totalCalibrationPoints = 9;
+        const totalCalibrationRounds = 2;
         const calibrationDwellMs = 500;
+        let currentCalibrationRound = 1;
 
         function showStatus(message, type) {
             const statusEl = document.getElementById('calibration-status');
@@ -410,7 +412,16 @@
 
             calibrationStarted = true;
             currentCalibrationPoint = 0;
-            updateProgress(0, totalCalibrationPoints);
+            currentCalibrationRound = 1;
+            updateProgress(0, totalCalibrationPoints * totalCalibrationRounds);
+
+            renderCalibrationRound();
+
+            showStatus('👀 Раунд 1/2: смотрите на точку ~0.5 сек, затем кликайте по ней', 'warning');
+            document.getElementById('start-calibration-btn').disabled = true;
+        }
+
+        function renderCalibrationRound() {
 
             document.querySelectorAll('.calibration-point').forEach(el => el.remove());
             calibrationPoints = [];
@@ -449,21 +460,25 @@
 
                     this.style.display = 'none';
                     currentCalibrationPoint++;
-                    updateProgress(currentCalibrationPoint, totalCalibrationPoints);
+                    updateProgress(currentCalibrationPoint, totalCalibrationPoints * totalCalibrationRounds);
 
-                    if (currentCalibrationPoint === totalCalibrationPoints) {
+                    const roundCompleted = currentCalibrationPoint % totalCalibrationPoints === 0;
+
+                    if (currentCalibrationPoint === totalCalibrationPoints * totalCalibrationRounds) {
                         finishCalibration();
+                    } else if (roundCompleted) {
+                        currentCalibrationRound++;
+                        showStatus(`✅ Раунд ${currentCalibrationRound - 1}/2 завершён. Начинаем раунд ${currentCalibrationRound}/2`, 'success');
+                        renderCalibrationRound();
                     } else {
-                        showStatus(`Точка ${currentCalibrationPoint}/${totalCalibrationPoints} откалибрована`, 'success');
+                        const roundPoint = currentCalibrationPoint - (currentCalibrationRound - 1) * totalCalibrationPoints;
+                        showStatus(`Раунд ${currentCalibrationRound}/2: точка ${roundPoint}/${totalCalibrationPoints} откалибрована`, 'success');
                     }
                 };
 
                 document.body.appendChild(point);
                 calibrationPoints.push(point);
             });
-
-            showStatus('👀 Смотрите на точку ~0.5 сек, затем кликайте по ней', 'warning');
-            document.getElementById('start-calibration-btn').disabled = true;
         }
 
         function finishCalibration() {
@@ -474,7 +489,7 @@
                 }
             });
 
-            showStatus('Калибровка завершена успешно!', 'success');
+            showStatus('Калибровка (2 раунда) завершена успешно!', 'success');
 
             document.getElementById('proceed-btn').style.display = 'inline-block';
             document.getElementById('start-calibration-btn').textContent = 'Повторить калибровку';
