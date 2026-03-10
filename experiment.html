@@ -1124,6 +1124,10 @@
     }
 
     async function postTelemetryWithFallback(fields, timeoutMs) {
+      if (trySendBeacon(fields)) {
+        return 'beacon_used';
+      }
+
       try {
         const fetchPromise = fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST',
@@ -1140,9 +1144,6 @@
         const result = await Promise.race([fetchPromise, timeoutPromise]);
 
         if (result === 'timeout') {
-          if (trySendBeacon(fields)) {
-            return 'beacon_used';
-          }
           return 'timeout_redirect';
         }
 
@@ -1150,15 +1151,9 @@
           return 'sent_ok';
         }
 
-        if (trySendBeacon(fields)) {
-          return 'beacon_used';
-        }
         return 'network_error';
       } catch (error) {
         console.error('❌ Ошибка отправки данных эксперимента:', error);
-        if (trySendBeacon(fields)) {
-          return 'beacon_used';
-        }
         return 'network_error';
       }
     }
