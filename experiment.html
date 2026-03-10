@@ -1193,11 +1193,6 @@
 
       console.log('🏁 Эксперимент завершён. Точек: ' + gazePoints.length);
 
-      if (gazePoints.length === 0) {
-        window.location.href = GOOGLE_FORM_URL;
-        return;
-      }
-
       recordScrollEvent('finish');
 
       const fields = {
@@ -1218,37 +1213,19 @@
       };
 
       const body = new URLSearchParams(fields);
-      const FALLBACK_TIMEOUT_MS = 12000;
-
       try {
-        const fetchPromise = fetch(GOOGLE_SCRIPT_URL, {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST',
           body
-        }).then(function(response) {
-          return { type: 'response', response };
         });
 
-        const timeoutPromise = new Promise(function(resolve) {
-          setTimeout(function() {
-            resolve({ type: 'timeout' });
-          }, FALLBACK_TIMEOUT_MS);
-        });
-
-        const result = await Promise.race([fetchPromise, timeoutPromise]);
-
-        if (result.type === 'response' && result.response.ok) {
+        if (response.ok) {
           console.log('✅ Данные успешно отправлены. Переход на Google Form.');
           window.location.href = GOOGLE_FORM_URL;
           return;
         }
 
-        if (result.type === 'timeout') {
-          console.warn('⚠️ Сервер долго не отвечает. Выполняем fallback-переход через ' + (FALLBACK_TIMEOUT_MS / 1000) + ' сек.');
-          window.location.href = GOOGLE_FORM_URL;
-          return;
-        }
-
-        console.error('❌ Ошибка отправки: сервер вернул код', result.response.status);
+        console.error('❌ Ошибка отправки: сервер вернул код', response.status);
         alert('Не удалось отправить данные эксперимента. Пожалуйста, попробуйте ещё раз.');
       } catch (error) {
         console.error('❌ Ошибка отправки данных эксперимента:', error);
