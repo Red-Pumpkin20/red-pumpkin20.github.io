@@ -1018,6 +1018,10 @@
     const SAMPLE_RATE_MS = 33; // точка каждые ~33 мс ≈ 30 точек/сек
     const SCROLL_SAMPLE_RATE_MS = 50; // записываем скролл до 20 раз/сек
     const BANNER_AOI_PADDING_PX = 0; // дополнительная зона AOI вокруг баннера
+    const TELEMETRY_QUEUE_KEY = 'experiment_unsent_payloads_v1';
+    const CLIENT_ERROR_LOG_KEY = 'experiment_client_errors_v1';
+    const CLIENT_ERROR_LOG_LIMIT = 30;
+    const FINAL_FETCH_TIMEOUT_MS = 30000;
 
     window._bannerRectViewport = null;
     window._bannerRectPage = null;
@@ -1086,7 +1090,180 @@
       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
+    function loadTelemetryQueue() {
+      try {
+        const raw = localStorage.getItem(TELEMETRY_QUEUE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.warn('⚠️ Не удалось прочитать очередь телеметрии:', error);
+        return [];
+      }
+    }
+
+    function saveTelemetryQueue(queue) {
+      try {
+        localStorage.setItem(TELEMETRY_QUEUE_KEY, JSON.stringify(queue));
+      } catch (error) {
+        console.warn('⚠️ Не удалось сохранить очередь телеметрии:', error);
+      }
+    }
+
+    function queueTelemetry(fields) {
+      const queue = loadTelemetryQueue();
+      queue.push(fields);
+      saveTelemetryQueue(queue);
+    }
+
+    function loadClientErrorLog() {
+      try {
+        const raw = localStorage.getItem(CLIENT_ERROR_LOG_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.warn('⚠️ Не удалось прочитать лог клиентских ошибок:', error);
+        return [];
+      }
+    }
+
+    function saveClientErrorLog(items) {
+      try {
+        localStorage.setItem(CLIENT_ERROR_LOG_KEY, JSON.stringify(items.slice(-CLIENT_ERROR_LOG_LIMIT)));
+      } catch (error) {
+        console.warn('⚠️ Не удалось сохранить лог клиентских ошибок:', error);
+      }
+    }
+
+    function pushClientError(entry) {
+      const errors = loadClientErrorLog();
+      errors.push(entry);
+      saveClientErrorLog(errors);
+      console.warn('🧭 Детали ошибки отправки сохранены:', entry);
+    }
+
+    function registerClientSendIssue(reason, details) {
+      const entry = {
+        at: new Date().toISOString(),
+        reason: reason,
+        online: navigator.onLine,
+        user_agent: navigator.userAgent,
+        queue_size: loadTelemetryQueue().length,
+        details: details || {}
+      };
+      pushClientError(entry);
+    }
+
+    function trySendBeacon(fields) {
+      if (!navigator.sendBeacon) {
+        registerClientSendIssue('beacon_unavailable', {
+          participant_id: fields.participant_id,
+          points_count: fields.points_count
+        });
+        return false;
+      }
+
+      const beaconFields = Object.assign({}, fields, { send_outcome: 'beacon_used' });
+      const accepted = navigator.sendBeacon(GOOGLE_SCRIPT_URL, new URLSearchParams(beaconFields));
+      if (accepted) {
+        console.log('📡 sendBeacon: payload поставлен в очередь браузера');
+      } else {
+        registerClientSendIssue('beacon_rejected', {
+          participant_id: fields.participant_id,
+          points_count: fields.points_count
+        });
+      }
+      return accepted;
+    }
+
+    async function postTelemetryWithFallback(fields, timeoutMs) {
+      if (trySendBeacon(fields)) {
+        return 'beacon_used';
+      }
+
+      try {
+        const fetchPromise = fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          body: new URLSearchParams(Object.assign({}, fields, { send_outcome: 'sent_ok' })),
+          keepalive: true
+        });
+
+        const timeoutPromise = new Promise(function(resolve) {
+          setTimeout(function() {
+            resolve('timeout');
+          }, timeoutMs);
+        });
+
+        const result = await Promise.race([fetchPromise, timeoutPromise]);
+
+        if (result === 'timeout') {
+          registerClientSendIssue('timeout_redirect', {
+            timeout_ms: timeoutMs,
+            participant_id: fields.participant_id,
+            points_count: fields.points_count
+          });
+          return 'timeout_redirect';
+        }
+
+        if (result.ok) {
+          return 'sent_ok';
+        }
+
+        registerClientSendIssue('network_error', {
+          http_status: result.status,
+          status_text: result.statusText,
+          participant_id: fields.participant_id,
+          points_count: fields.points_count
+        });
+        return 'network_error';
+      } catch (error) {
+        console.error('❌ Ошибка отправки данных эксперимента:', error);
+        registerClientSendIssue('network_error', {
+          error_message: error?.message || String(error),
+          participant_id: fields.participant_id,
+          points_count: fields.points_count
+        });
+        return 'network_error';
+      }
+    }
+
+
+    async function flushQueuedTelemetry() {
+      const queue = loadTelemetryQueue();
+      if (!queue.length) return;
+
+      const unsent = [];
+      for (const item of queue) {
+        const status = await postTelemetryWithFallback(item, 5000);
+        if (status === 'network_error' || status === 'timeout_redirect') {
+          unsent.push(Object.assign({}, item, { send_outcome: status }));
+        }
+      }
+
+      saveTelemetryQueue(unsent);
+      if (unsent.length) {
+        console.warn('⚠️ Не все отложенные payload удалось отправить. Осталось:', unsent.length);
+      } else {
+        console.log('✅ Отложенные payload успешно отправлены');
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+      flushQueuedTelemetry();
+
+      window.addEventListener('error', function (event) {
+        registerClientSendIssue('window_error', {
+          message: event.message,
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno
+        });
+      });
+
+      window.addEventListener('unhandledrejection', function (event) {
+        registerClientSendIssue('unhandled_rejection', {
+          reason: String(event.reason || 'unknown')
+        });
+      });
 
       if (!sessionStorage.getItem('calibrationComplete')) {
         alert('Сначала пройдите калибровку!');
@@ -1217,43 +1394,30 @@
         send_reason: 'checkout'
       };
 
-      const body = new URLSearchParams(fields);
-      const FALLBACK_TIMEOUT_MS = 12000;
+      const sendOutcome = await postTelemetryWithFallback(fields, FINAL_FETCH_TIMEOUT_MS);
 
-      try {
-        const fetchPromise = fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          body
-        }).then(function(response) {
-          return { type: 'response', response };
-        });
-
-        const timeoutPromise = new Promise(function(resolve) {
-          setTimeout(function() {
-            resolve({ type: 'timeout' });
-          }, FALLBACK_TIMEOUT_MS);
-        });
-
-        const result = await Promise.race([fetchPromise, timeoutPromise]);
-
-        if (result.type === 'response' && result.response.ok) {
-          console.log('✅ Данные успешно отправлены. Переход на Google Form.');
-          window.location.href = GOOGLE_FORM_URL;
-          return;
-        }
-
-        if (result.type === 'timeout') {
-          console.warn('⚠️ Сервер долго не отвечает. Выполняем fallback-переход через ' + (FALLBACK_TIMEOUT_MS / 1000) + ' сек.');
-          window.location.href = GOOGLE_FORM_URL;
-          return;
-        }
-
-        console.error('❌ Ошибка отправки: сервер вернул код', result.response.status);
-        alert('Не удалось отправить данные эксперимента. Пожалуйста, попробуйте ещё раз.');
-      } catch (error) {
-        console.error('❌ Ошибка отправки данных эксперимента:', error);
-        alert('Ошибка сети при отправке данных. Проверьте подключение и попробуйте снова.');
+      if (sendOutcome === 'sent_ok') {
+        console.log('✅ Данные успешно отправлены. Переход на Google Form.');
+        window.location.href = GOOGLE_FORM_URL;
+        return;
       }
+
+      if (sendOutcome === 'beacon_used') {
+        console.warn('⚠️ Использован fallback через sendBeacon. Переход на Google Form.');
+        window.location.href = GOOGLE_FORM_URL;
+        return;
+      }
+
+      queueTelemetry(Object.assign({}, fields, { send_outcome: sendOutcome }));
+
+      if (sendOutcome === 'timeout_redirect') {
+        console.warn('⚠️ timeout_redirect: не удалось отправить сразу, payload сохранён локально.');
+        window.location.href = GOOGLE_FORM_URL;
+        return;
+      }
+
+      console.error('❌ network_error: payload сохранён локально для повторной отправки.');
+      alert('Ошибка сети при отправке данных. Данные сохранены локально и будут отправлены при следующем открытии страницы.');
 
       if (btn) {
         btn.disabled = false;
