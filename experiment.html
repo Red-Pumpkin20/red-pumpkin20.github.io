@@ -355,6 +355,7 @@
                       </ul>
                       <div class="d-flex flex-wrap justify-content-center">
                         <button onclick="finishExperiment(event)" class="w-100 btn btn-primary">Перейти к оформлению</button>
+                        <div id="telemetry-debug" class="alert alert-warning small w-100 mt-2 mb-0 d-none" role="alert"></div>
                       </div>
                     </div>
                   </li>
@@ -1019,6 +1020,8 @@
     const SCROLL_SAMPLE_RATE_MS = 50; // записываем скролл до 20 раз/сек
     const BANNER_AOI_PADDING_PX = 0; // дополнительная зона AOI вокруг баннера
     const TELEMETRY_QUEUE_KEY = 'experiment_unsent_payloads_v1';
+    const CLIENT_ERROR_LOG_KEY = 'experiment_client_errors_v1';
+    const CLIENT_ERROR_LOG_LIMIT = 30;
     const FINAL_FETCH_TIMEOUT_MS = 30000;
 
     window._bannerRectViewport = null;
@@ -1113,12 +1116,80 @@
       saveTelemetryQueue(queue);
     }
 
+    function loadClientErrorLog() {
+      try {
+        const raw = localStorage.getItem(CLIENT_ERROR_LOG_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.warn('⚠️ Не удалось прочитать лог клиентских ошибок:', error);
+        return [];
+      }
+    }
+
+    function saveClientErrorLog(items) {
+      try {
+        localStorage.setItem(CLIENT_ERROR_LOG_KEY, JSON.stringify(items.slice(-CLIENT_ERROR_LOG_LIMIT)));
+      } catch (error) {
+        console.warn('⚠️ Не удалось сохранить лог клиентских ошибок:', error);
+      }
+    }
+
+    function pushClientError(entry) {
+      const errors = loadClientErrorLog();
+      errors.push(entry);
+      saveClientErrorLog(errors);
+
+      const panel = document.getElementById('telemetry-debug');
+      if (panel) {
+        const shortReason = entry.reason || 'unknown';
+        panel.classList.remove('d-none');
+        panel.textContent = 'Ошибка отправки (' + shortReason + ') в ' + entry.at + '. Детали в localStorage: ' + CLIENT_ERROR_LOG_KEY;
+      }
+
+      console.warn('🧭 Детали ошибки отправки сохранены:', entry);
+    }
+
+    function registerClientSendIssue(reason, details) {
+      const entry = {
+        at: new Date().toISOString(),
+        reason: reason,
+        online: navigator.onLine,
+        user_agent: navigator.userAgent,
+        queue_size: loadTelemetryQueue().length,
+        details: details || {}
+      };
+      pushClientError(entry);
+    }
+
+    function showLastClientError() {
+      const panel = document.getElementById('telemetry-debug');
+      if (!panel) return;
+      const errors = loadClientErrorLog();
+      if (!errors.length) return;
+      const last = errors[errors.length - 1];
+      panel.classList.remove('d-none');
+      panel.textContent = 'Последняя ошибка отправки: ' + (last.reason || 'unknown') + ' (' + last.at + ').';
+    }
+
     function trySendBeacon(fields) {
-      if (!navigator.sendBeacon) return false;
+      if (!navigator.sendBeacon) {
+        registerClientSendIssue('beacon_unavailable', {
+          participant_id: fields.participant_id,
+          points_count: fields.points_count
+        });
+        return false;
+      }
+
       const beaconFields = Object.assign({}, fields, { send_outcome: 'beacon_used' });
       const accepted = navigator.sendBeacon(GOOGLE_SCRIPT_URL, new URLSearchParams(beaconFields));
       if (accepted) {
         console.log('📡 sendBeacon: payload поставлен в очередь браузера');
+      } else {
+        registerClientSendIssue('beacon_rejected', {
+          participant_id: fields.participant_id,
+          points_count: fields.points_count
+        });
       }
       return accepted;
     }
@@ -1144,6 +1215,11 @@
         const result = await Promise.race([fetchPromise, timeoutPromise]);
 
         if (result === 'timeout') {
+          registerClientSendIssue('timeout_redirect', {
+            timeout_ms: timeoutMs,
+            participant_id: fields.participant_id,
+            points_count: fields.points_count
+          });
           return 'timeout_redirect';
         }
 
@@ -1151,12 +1227,24 @@
           return 'sent_ok';
         }
 
+        registerClientSendIssue('network_error', {
+          http_status: result.status,
+          status_text: result.statusText,
+          participant_id: fields.participant_id,
+          points_count: fields.points_count
+        });
         return 'network_error';
       } catch (error) {
         console.error('❌ Ошибка отправки данных эксперимента:', error);
+        registerClientSendIssue('network_error', {
+          error_message: error?.message || String(error),
+          participant_id: fields.participant_id,
+          points_count: fields.points_count
+        });
         return 'network_error';
       }
     }
+
 
     async function flushQueuedTelemetry() {
       const queue = loadTelemetryQueue();
@@ -1180,6 +1268,22 @@
 
     document.addEventListener('DOMContentLoaded', function () {
       flushQueuedTelemetry();
+      showLastClientError();
+
+      window.addEventListener('error', function (event) {
+        registerClientSendIssue('window_error', {
+          message: event.message,
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno
+        });
+      });
+
+      window.addEventListener('unhandledrejection', function (event) {
+        registerClientSendIssue('unhandled_rejection', {
+          reason: String(event.reason || 'unknown')
+        });
+      });
 
       if (!sessionStorage.getItem('calibrationComplete')) {
         alert('Сначала пройдите калибровку!');
