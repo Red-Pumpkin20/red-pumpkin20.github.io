@@ -1212,6 +1212,12 @@
         .then(function () {
           window._webgazerState.started = true;
 
+          // Как и в intro.html, отключаем штатное обучение WebGazer по мыши,
+          // чтобы предсказания не «липли» к курсору.
+          if (typeof webgazer.removeMouseEventListeners === 'function') {
+            webgazer.removeMouseEventListeners();
+          }
+
           // Явно переносим точки калибровки из intro.html, даже если saveDataAcrossSessions сработал нестабильно.
           replayCalibrationPointsFromSession();
         })
