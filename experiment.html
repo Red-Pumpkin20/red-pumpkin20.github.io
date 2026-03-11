@@ -1208,10 +1208,7 @@
           .showFaceOverlay(false)
           .showFaceFeedbackBox(false)
           .showPredictionPoints(false)
-          .applyKalmanFilter(true)
-          .setGazeListener(function (data) {
-            pushGazePoint(data, 'listener');
-          });
+          .applyKalmanFilter(true);
       }
 
       function startPredictionPollingFallback() {
