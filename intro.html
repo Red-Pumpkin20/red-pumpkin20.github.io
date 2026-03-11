@@ -360,6 +360,7 @@
         let calibrationComplete = false;
         let calibrationPoints = [];
         let currentCalibrationPoint = 0;
+        let recordedCalibrationPoints = [];
         const totalCalibrationPoints = 9;
         const totalCalibrationRounds = 2;
         const calibrationDwellMs = 500;
@@ -418,6 +419,7 @@
             calibrationStarted = true;
             currentCalibrationPoint = 0;
             currentCalibrationRound = 1;
+            recordedCalibrationPoints = [];
             updateProgress(0, totalCalibrationPoints * totalCalibrationRounds);
 
             renderCalibrationRound();
@@ -461,6 +463,11 @@
                     const centerY = rect.top + rect.height / 2;
                     if (typeof webgazer !== 'undefined' && typeof webgazer.recordScreenPosition === 'function') {
                         webgazer.recordScreenPosition(centerX, centerY, 'click');
+                        recordedCalibrationPoints.push({
+                            x: Math.round(centerX),
+                            y: Math.round(centerY),
+                            t: Date.now()
+                        });
                     }
 
                     this.style.display = 'none';
@@ -509,6 +516,7 @@
             }
 
             sessionStorage.setItem('calibrationComplete', 'true');
+            sessionStorage.setItem('webgazerManualCalibration', JSON.stringify(recordedCalibrationPoints));
             window.location.href = 'experiment.html';
         }
 

@@ -1086,6 +1086,31 @@
       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
+    function replayManualCalibration() {
+      try {
+        const raw = sessionStorage.getItem('webgazerManualCalibration');
+        if (!raw) return 0;
+        const points = JSON.parse(raw);
+        if (!Array.isArray(points) || !points.length) return 0;
+        if (!window.webgazer || typeof webgazer.recordScreenPosition !== 'function') return 0;
+
+        let applied = 0;
+        points.forEach(function (point) {
+          if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') return;
+          webgazer.recordScreenPosition(point.x, point.y, 'click');
+          applied++;
+        });
+
+        if (applied > 0) {
+          console.log('♻️ Восстановлена ручная калибровка из sessionStorage. Точек:', applied);
+        }
+        return applied;
+      } catch (error) {
+        console.warn('⚠️ Не удалось восстановить ручную калибровку:', error);
+        return 0;
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
 
       if (!sessionStorage.getItem('calibrationComplete')) {
@@ -1169,6 +1194,7 @@
         })
         .begin()
         .then(function () {
+          replayManualCalibration();
           // Полностью отключаем обучение по мыши (click/move listeners)
           if (typeof webgazer.removeMouseEventListeners === 'function') {
             webgazer.removeMouseEventListeners();
@@ -1213,6 +1239,10 @@
       const participantId = window._participantId || 'unknown';
 
       console.log('🏁 Эксперимент завершён. Точек: ' + gazePoints.length);
+
+      if (!gazePoints.length) {
+        console.warn('⚠️ Не собрано ни одной точки. Проверьте разрешение камеры и калибровку.');
+      }
 
       recordScrollEvent('finish');
 
