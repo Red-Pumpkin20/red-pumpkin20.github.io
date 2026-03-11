@@ -1111,6 +1111,18 @@
       }
     }
 
+    function stopPredictionPolling() {
+      if (window._predictionPollTimer) {
+        clearInterval(window._predictionPollTimer);
+        window._predictionPollTimer = null;
+      }
+      if (window._predictionHealthTimer) {
+        clearInterval(window._predictionHealthTimer);
+        window._predictionHealthTimer = null;
+      }
+    }
+
+
     document.addEventListener('DOMContentLoaded', function () {
 
       if (!sessionStorage.getItem('calibrationComplete')) {
@@ -1132,6 +1144,8 @@
       window._scrollEvents   = [];
       window._webgazerStarted = false;
       window._webgazerStarting = false;
+      window._predictionPollTimer = null;
+      window._predictionHealthTimer = null;
       let lastSample         = 0;
       let lastScrollSample   = 0;
 
@@ -1151,6 +1165,42 @@
         recordScrollEvent('scroll');
       }, { passive: true });
 
+      function pushGazePoint(data, source) {
+        if (!data || typeof data.x !== 'number' || typeof data.y !== 'number') return;
+        const now = Date.now();
+        if (now - lastSample < SAMPLE_RATE_MS) return;
+        lastSample = now;
+
+        const view = getViewportMetrics();
+        updateBannerRect();
+        const point = {
+          x: Math.round(data.x),
+          y: Math.round(data.y),
+          t: now - window._sessionStart,
+          page_x: Math.round(data.x + view.scroll_x),
+          page_y: Math.round(data.y + view.scroll_y),
+          scroll_x: view.scroll_x,
+          scroll_y: view.scroll_y,
+          viewport_w: view.viewport_w,
+          viewport_h: view.viewport_h,
+          doc_w: view.doc_w,
+          doc_h: view.doc_h,
+          dpr: view.dpr,
+          source: source || 'listener'
+        };
+
+        point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
+        point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
+        point.on_banner = point.on_banner_viewport || point.on_banner_page;
+        if (point.on_banner) {
+          window._bannerHits++;
+        }
+
+        window._gazePoints.push(point);
+        if (window._gazePoints.length % 100 === 0)
+          console.log('📊 Точек собрано:', window._gazePoints.length, '| source:', point.source);
+      }
+
       function configureWebgazerListener() {
         webgazer
           .saveDataAcrossSessions(true)
@@ -1160,38 +1210,29 @@
           .showPredictionPoints(false)
           .applyKalmanFilter(true)
           .setGazeListener(function (data) {
-            if (!data) return;
-            const now = Date.now();
-            if (now - lastSample < SAMPLE_RATE_MS) return;
-            lastSample = now;
-            const view = getViewportMetrics();
-            updateBannerRect();
-            const point = {
-              x: Math.round(data.x),
-              y: Math.round(data.y),
-              t: now - window._sessionStart,
-              page_x: Math.round(data.x + view.scroll_x),
-              page_y: Math.round(data.y + view.scroll_y),
-              scroll_x: view.scroll_x,
-              scroll_y: view.scroll_y,
-              viewport_w: view.viewport_w,
-              viewport_h: view.viewport_h,
-              doc_w: view.doc_w,
-              doc_h: view.doc_h,
-              dpr: view.dpr
-            };
-
-            point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
-            point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
-            point.on_banner = point.on_banner_viewport || point.on_banner_page;
-            if (point.on_banner) {
-              window._bannerHits++;
-            }
-
-            window._gazePoints.push(point);
-            if (window._gazePoints.length % 100 === 0)
-              console.log('📊 Точек собрано:', window._gazePoints.length);
+            pushGazePoint(data, 'listener');
           });
+      }
+
+      function startPredictionPollingFallback() {
+        stopPredictionPolling();
+        window._predictionPollTimer = setInterval(function () {
+          if (!window._webgazerStarted || !window.webgazer) return;
+          try {
+            const prediction = webgazer.getCurrentPrediction();
+            if (prediction) {
+              pushGazePoint(prediction, 'poll');
+            }
+          } catch (e) {
+            console.warn('⚠️ Ошибка чтения getCurrentPrediction():', e);
+          }
+        }, Math.max(30, SAMPLE_RATE_MS));
+
+        window._predictionHealthTimer = setInterval(function () {
+          console.log('🩺 Статус трекинга: started=', !!window._webgazerStarted,
+            '| points=', (window._gazePoints || []).length,
+            '| poll=', !!window._predictionPollTimer);
+        }, 5000);
       }
 
       async function startWebgazerTracking(source) {
@@ -1207,6 +1248,7 @@
             webgazer.removeMouseEventListeners();
           }
           window._webgazerStarted = true;
+          startPredictionPollingFallback();
           console.log('✅ webgazer.begin() успешно выполнен. ID участника:', window._participantId);
         } catch (error) {
           console.error('❌ Ошибка запуска WebGazer:', error);
@@ -1257,6 +1299,8 @@
         btn.disabled = true;
         btn.textContent = 'Отправка...';
       }
+
+      stopPredictionPolling();
 
       const gazePoints = window._gazePoints || [];
       const sessionStart = window._sessionStart || Date.now();
