@@ -364,6 +364,7 @@
         const totalCalibrationRounds = 2;
         const calibrationDwellMs = 500;
         let currentCalibrationRound = 1;
+        let calibrationClicks = [];
 
         function showStatus(message, type) {
             const statusEl = document.getElementById('calibration-status');
@@ -418,6 +419,8 @@
             calibrationStarted = true;
             currentCalibrationPoint = 0;
             currentCalibrationRound = 1;
+            calibrationClicks = [];
+            sessionStorage.removeItem('webgazerCalibrationPoints');
             updateProgress(0, totalCalibrationPoints * totalCalibrationRounds);
 
             renderCalibrationRound();
@@ -462,6 +465,7 @@
                     if (typeof webgazer !== 'undefined' && typeof webgazer.recordScreenPosition === 'function') {
                         webgazer.recordScreenPosition(centerX, centerY, 'click');
                     }
+                    calibrationClicks.push({ x: Math.round(centerX), y: Math.round(centerY), ts: Date.now() });
 
                     this.style.display = 'none';
                     currentCalibrationPoint++;
@@ -495,6 +499,13 @@
             });
 
             showStatus('Калибровка (2 раунда) завершена успешно!', 'success');
+
+            try {
+                sessionStorage.setItem('webgazerCalibrationPoints', JSON.stringify(calibrationClicks));
+                sessionStorage.setItem('webgazerCalibrationSavedAt', String(Date.now()));
+            } catch (e) {
+                console.warn('Не удалось сохранить калибровочные точки в sessionStorage', e);
+            }
 
             document.getElementById('proceed-btn').style.display = 'inline-block';
             document.getElementById('start-calibration-btn').textContent = 'Повторить калибровку';
