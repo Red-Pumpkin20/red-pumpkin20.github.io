@@ -1180,6 +1180,27 @@
     });
 
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
+    function downloadWebgazerData(payload, participantId) {
+      const blob = new Blob([
+        JSON.stringify(payload, null, 2)
+      ], { type: 'application/json;charset=utf-8' });
+
+      const safeId = String(participantId || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const fileName = `webgazer_${safeId}_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(function () {
+        URL.revokeObjectURL(url);
+      }, 1000);
+    }
+
     async function finishExperiment(event) {
       const btn = event?.currentTarget || document.querySelector('button[onclick*="finishExperiment"]');
       if (btn) {
@@ -1211,6 +1232,30 @@
         gaze_data: JSON.stringify(gazePoints),
         send_reason: 'checkout'
       };
+
+      const jsonPayload = {
+        participant_id: participantId,
+        date_iso: new Date(sessionStart).toISOString(),
+        duration_sec: Math.round((Date.now() - sessionStart) / 1000),
+        points_count: gazePoints.length,
+        screen_w: window.screen.width,
+        screen_h: window.screen.height,
+        device_pixel_ratio: window.devicePixelRatio || 1,
+        user_agent: navigator.userAgent,
+        scroll_events: window._scrollEvents || [],
+        banner_rect_viewport: window._bannerRectViewport || {},
+        banner_rect_page: window._bannerRectPage || {},
+        banner_hits: window._bannerHits || 0,
+        gaze_data: gazePoints,
+        send_reason: 'checkout'
+      };
+
+      try {
+        downloadWebgazerData(jsonPayload, participantId);
+        console.log('💾 JSON с данными WebGazer сохранён локально.');
+      } catch (downloadError) {
+        console.error('⚠️ Не удалось скачать JSON с данными WebGazer:', downloadError);
+      }
 
       const body = new URLSearchParams(fields);
       try {
