@@ -465,7 +465,13 @@
                     if (typeof webgazer !== 'undefined' && typeof webgazer.recordScreenPosition === 'function') {
                         webgazer.recordScreenPosition(centerX, centerY, 'click');
                     }
-                    calibrationClicks.push({ x: Math.round(centerX), y: Math.round(centerY), ts: Date.now() });
+                    calibrationClicks.push({
+                        x: Math.round(centerX),
+                        y: Math.round(centerY),
+                        nx: Number((centerX / Math.max(window.innerWidth || 1, 1)).toFixed(6)),
+                        ny: Number((centerY / Math.max(window.innerHeight || 1, 1)).toFixed(6)),
+                        ts: Date.now()
+                    });
 
                     this.style.display = 'none';
                     currentCalibrationPoint++;

@@ -1099,15 +1099,29 @@
         if (!Array.isArray(points) || points.length === 0) return 0;
 
         let restored = 0;
+        const viewportW = Math.max(window.innerWidth || 1, 1);
+        const viewportH = Math.max(window.innerHeight || 1, 1);
+
         points.forEach(function (p) {
-          if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
+          if (!p) return;
+
+          let rx = Number(p.x);
+          let ry = Number(p.y);
+
+          if (Number.isFinite(p.nx) && Number.isFinite(p.ny)) {
+            rx = Number(p.nx) * viewportW;
+            ry = Number(p.ny) * viewportH;
+          }
+
+          if (!Number.isFinite(rx) || !Number.isFinite(ry)) return;
+
           if (typeof webgazer.recordScreenPosition === 'function') {
-            webgazer.recordScreenPosition(Number(p.x), Number(p.y), 'click');
+            webgazer.recordScreenPosition(Math.round(rx), Math.round(ry), 'click');
             restored++;
           }
         });
         if (restored > 0) {
-          console.log('♻️ Восстановлены калибровочные точки из intro.html:', restored);
+          console.log('♻️ Восстановлены калибровочные точки из intro.html (с учётом текущего viewport):', restored);
         }
         return restored;
       } catch (e) {
