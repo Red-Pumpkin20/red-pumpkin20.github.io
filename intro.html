@@ -502,6 +502,22 @@
             calibrationStarted = false;
         }
 
+        function persistRegressionSnapshotToSession() {
+            if (typeof webgazer === 'undefined' || typeof webgazer.getRegression !== 'function') return;
+            try {
+                const regressions = webgazer.getRegression();
+                if (!Array.isArray(regressions) || !regressions.length) return;
+                const primary = regressions[0];
+                if (!primary || typeof primary.getData !== 'function') return;
+                const data = primary.getData();
+                if (!data) return;
+                sessionStorage.setItem('webgazerRegressionData', JSON.stringify(data));
+                console.log('💾 Снимок регрессии WebGazer сохранён в sessionStorage.');
+            } catch (error) {
+                console.warn('⚠️ Не удалось сохранить снимок регрессии WebGazer:', error);
+            }
+        }
+
         function proceedToExperiment() {
             if (!calibrationComplete) {
                 showStatus('Сначала пройдите калибровку!', 'warning');
@@ -509,6 +525,7 @@
             }
 
             sessionStorage.setItem('calibrationComplete', 'true');
+            persistRegressionSnapshotToSession();
             window.location.href = 'experiment.html';
         }
 

@@ -1086,6 +1086,37 @@
       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
+    function restoreRegressionSnapshotFromSession() {
+      try {
+        const raw = sessionStorage.getItem('webgazerRegressionData');
+        if (!raw) {
+          console.warn('⚠️ В sessionStorage нет webgazerRegressionData. Используется только saveDataAcrossSessions().');
+          return 0;
+        }
+        const data = JSON.parse(raw);
+        if (!data) return 0;
+        if (!window.webgazer || typeof webgazer.getRegression !== 'function') return 0;
+
+        const regressions = webgazer.getRegression();
+        if (!Array.isArray(regressions) || !regressions.length) return 0;
+
+        let restored = 0;
+        regressions.forEach(function (regression) {
+          if (!regression || typeof regression.setData !== 'function') return;
+          regression.setData(data);
+          restored++;
+        });
+
+        if (restored > 0) {
+          console.log('♻️ Снимок регрессии восстановлен из sessionStorage. Моделей:', restored);
+        }
+        return restored;
+      } catch (error) {
+        console.warn('⚠️ Не удалось восстановить снимок регрессии WebGazer:', error);
+        return 0;
+      }
+    }
+
     function stopPredictionPolling() {
       if (window._predictionPollTimer) {
         clearInterval(window._predictionPollTimer);
@@ -1216,6 +1247,7 @@
           configureWebgazerListener();
           webgazer.saveDataAcrossSessions(true);
           await webgazer.begin();
+          restoreRegressionSnapshotFromSession();
           if (typeof webgazer.removeMouseEventListeners === 'function') {
             webgazer.removeMouseEventListeners();
           }
