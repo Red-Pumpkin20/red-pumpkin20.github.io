@@ -1130,6 +1130,8 @@
       window._gazePoints     = [];
       window._bannerHits     = 0;
       window._scrollEvents   = [];
+      window._webgazerStarted = false;
+      window._webgazerStarting = false;
       let lastSample         = 0;
       let lastScrollSample   = 0;
 
@@ -1149,60 +1151,82 @@
         recordScrollEvent('scroll');
       }, { passive: true });
 
-      console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
+      function configureWebgazerListener() {
+        webgazer
+          .saveDataAcrossSessions(true)
+          .showVideoPreview(false)
+          .showFaceOverlay(false)
+          .showFaceFeedbackBox(false)
+          .showPredictionPoints(false)
+          .applyKalmanFilter(true)
+          .setGazeListener(function (data) {
+            if (!data) return;
+            const now = Date.now();
+            if (now - lastSample < SAMPLE_RATE_MS) return;
+            lastSample = now;
+            const view = getViewportMetrics();
+            updateBannerRect();
+            const point = {
+              x: Math.round(data.x),
+              y: Math.round(data.y),
+              t: now - window._sessionStart,
+              page_x: Math.round(data.x + view.scroll_x),
+              page_y: Math.round(data.y + view.scroll_y),
+              scroll_x: view.scroll_x,
+              scroll_y: view.scroll_y,
+              viewport_w: view.viewport_w,
+              viewport_h: view.viewport_h,
+              doc_w: view.doc_w,
+              doc_h: view.doc_h,
+              dpr: view.dpr
+            };
 
-      webgazer
-        // Загружаем калибровку из intro.html через штатное хранилище WebGazer
-        .saveDataAcrossSessions(true)
-        .showVideoPreview(false)
-        .showFaceOverlay(false)
-        .showFaceFeedbackBox(false)
-        .showPredictionPoints(false)
-        .applyKalmanFilter(true)
-        .setGazeListener(function (data) {
-          if (!data) return;
-          const now = Date.now();
-          if (now - lastSample < SAMPLE_RATE_MS) return;
-          lastSample = now;
-          const view = getViewportMetrics();
-          updateBannerRect();
-          const point = {
-            x: Math.round(data.x),
-            y: Math.round(data.y),
-            t: now - window._sessionStart,
-            page_x: Math.round(data.x + view.scroll_x),
-            page_y: Math.round(data.y + view.scroll_y),
-            scroll_x: view.scroll_x,
-            scroll_y: view.scroll_y,
-            viewport_w: view.viewport_w,
-            viewport_h: view.viewport_h,
-            doc_w: view.doc_w,
-            doc_h: view.doc_h,
-            dpr: view.dpr
-          };
+            point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
+            point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
+            point.on_banner = point.on_banner_viewport || point.on_banner_page;
+            if (point.on_banner) {
+              window._bannerHits++;
+            }
 
-          point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
-          point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
-          point.on_banner = point.on_banner_viewport || point.on_banner_page;
-          if (point.on_banner) {
-            window._bannerHits++;
-          }
+            window._gazePoints.push(point);
+            if (window._gazePoints.length % 100 === 0)
+              console.log('📊 Точек собрано:', window._gazePoints.length);
+          });
+      }
 
-          window._gazePoints.push(point);
-          if (window._gazePoints.length % 100 === 0)
-            console.log('📊 Точек собрано:', window._gazePoints.length);
-        })
-        .begin()
-        .then(function () {
+      async function startWebgazerTracking(source) {
+        if (window._webgazerStarted || window._webgazerStarting) return;
+        window._webgazerStarting = true;
+        console.log('🎬 startWebgazerTracking(): пытаемся вызвать webgazer.begin(). Источник:', source);
+
+        try {
+          configureWebgazerListener();
+          await webgazer.begin();
           replayManualCalibration();
-          // Полностью отключаем обучение по мыши (click/move listeners)
           if (typeof webgazer.removeMouseEventListeners === 'function') {
             webgazer.removeMouseEventListeners();
           }
-        })
-        .catch(function (error) {
+          window._webgazerStarted = true;
+          console.log('✅ webgazer.begin() успешно выполнен. ID участника:', window._participantId);
+        } catch (error) {
           console.error('❌ Ошибка запуска WebGazer:', error);
-        });
+          console.warn('ℹ️ Повторим запуск после первого взаимодействия пользователя (click/touchstart/keydown).');
+
+          const retryOnce = function () {
+            document.removeEventListener('click', retryOnce);
+            document.removeEventListener('touchstart', retryOnce);
+            document.removeEventListener('keydown', retryOnce);
+            startWebgazerTracking('user-gesture-retry');
+          };
+          document.addEventListener('click', retryOnce, { once: true, passive: true });
+          document.addEventListener('touchstart', retryOnce, { once: true, passive: true });
+          document.addEventListener('keydown', retryOnce, { once: true });
+        } finally {
+          window._webgazerStarting = false;
+        }
+      }
+
+      startWebgazerTracking('dom-content-loaded');
     });
 
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
