@@ -1023,6 +1023,11 @@
     window._bannerRectPage = null;
     window._bannerHits = 0;
     window._scrollEvents = [];
+    window._webgazerState = {
+      started: false,
+      startupError: null,
+      firstPointTs: null
+    };
 
     function getViewportMetrics() {
       return {
@@ -1096,7 +1101,12 @@
 
       if (!window.webgazer) {
         console.error('❌ WebGazer не загрузился');
+        window._webgazerState.startupError = 'webgazer_not_loaded';
         return;
+      }
+
+      if (!window.isSecureContext) {
+        console.error('❌ Небезопасный контекст: Chromium блокирует доступ к камере без HTTPS/localhost.');
       }
 
       // Уникальный ID участника
@@ -1163,18 +1173,25 @@
             window._bannerHits++;
           }
 
+          if (!window._webgazerState.firstPointTs) {
+            window._webgazerState.firstPointTs = now;
+            console.log('✅ Получена первая gaze-точка.');
+          }
+
           window._gazePoints.push(point);
           if (window._gazePoints.length % 100 === 0)
             console.log('📊 Точек собрано:', window._gazePoints.length);
         })
         .begin()
         .then(function () {
+          window._webgazerState.started = true;
           // Полностью отключаем обучение по мыши (click/move listeners)
           if (typeof webgazer.removeMouseEventListeners === 'function') {
             webgazer.removeMouseEventListeners();
           }
         })
         .catch(function (error) {
+          window._webgazerState.startupError = String(error && error.message ? error.message : error);
           console.error('❌ Ошибка запуска WebGazer:', error);
         });
     });
@@ -1211,8 +1228,22 @@
       const gazePoints = window._gazePoints || [];
       const sessionStart = window._sessionStart || Date.now();
       const participantId = window._participantId || 'unknown';
+      const webgazerState = window._webgazerState || {};
 
       console.log('🏁 Эксперимент завершён. Точек: ' + gazePoints.length);
+
+      if (!webgazerState.started || gazePoints.length === 0) {
+        const reason = webgazerState.startupError
+          ? `Ошибка запуска WebGazer: ${webgazerState.startupError}`
+          : 'Камера не дала предсказаний (частая причина в Chromium: запрет доступа к камере или запуск без HTTPS).';
+        console.error('❌ Данные взгляда пустые. ' + reason);
+        alert('Не удалось собрать данные взгляда. Разрешите доступ к камере, убедитесь что сайт открыт по HTTPS и подождите 5–10 секунд перед завершением.');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Перейти к оформлению';
+        }
+        return;
+      }
 
       recordScrollEvent('finish');
 
