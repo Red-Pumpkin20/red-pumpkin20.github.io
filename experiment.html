@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="format-detection" content="telephone=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="author" content="">
     <meta name="keywords" content="">
     <meta name="description" content="">
@@ -22,8 +23,113 @@
       html[lang="ru"] .section-title h3 { font-size: 1.55rem; }
       html[lang="ru"] .btn { white-space: normal; }
     </style>
+
+    <style>
+      #intro-merged {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      #intro-merged,
+      #intro-merged * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      #intro-merged .container { max-width: 900px; width: 100%; }
+      #intro-merged .card { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.3); padding: 50px; animation: slideUp .6s ease-out; }
+      @keyframes slideUp { from { opacity: 0; transform: translateY(30px);} to {opacity:1; transform: translateY(0);} }
+      #intro-merged h1 { color:#2c3e50; font-size:2.8em; margin-bottom:15px; text-align:center; font-weight:700; }
+      #intro-merged .subtitle { color:#7f8c8d; font-size:1.2em; text-align:center; margin-bottom:40px; }
+      #intro-merged h2 { color:#667eea; font-size:1.8em; margin-top:35px; margin-bottom:20px; font-weight:600; }
+      #intro-merged .instruction-text { color:#34495e; font-size:1.15em; line-height:1.8; margin-bottom:20px; }
+      #intro-merged .instruction-text strong { color:#667eea; font-weight:600; }
+      #intro-merged .highlight-box { background: linear-gradient(135deg,#f8f9fa,#e9ecef); border-left:5px solid #667eea; padding:25px; margin:25px 0; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,.05);}
+      #intro-merged .step { background: linear-gradient(135deg, rgba(102,126,234,.08), rgba(118,75,162,.08)); padding:20px 25px; margin:15px 0; border-radius:12px; border-left:5px solid #667eea; }
+      #intro-merged .step-number { display:inline-block; width:35px; height:35px; background: linear-gradient(135deg,#667eea,#764ba2); color:white; border-radius:50%; text-align:center; line-height:35px; font-weight:bold; margin-right:15px; font-size:1.1em; }
+      #intro-merged .button-container { display:flex; gap:20px; justify-content:center; margin-top:40px; flex-wrap:wrap; }
+      #intro-merged .btn { padding:18px 40px; font-size:1.2em; font-weight:bold; border:none; border-radius:12px; cursor:pointer; transition:all .3s; box-shadow:0 4px 15px rgba(0,0,0,.2); min-width:220px; text-transform:uppercase; letter-spacing:.5px; }
+      #intro-merged .btn-calibrate { background: linear-gradient(135deg,#667eea,#764ba2); color:white; }
+      #intro-merged .btn-start { background: linear-gradient(135deg,#56ab2f,#a8e063); color:white; display:none; }
+      #intro-merged .btn:hover { transform: translateY(-3px); box-shadow:0 8px 25px rgba(0,0,0,.3); }
+      #intro-merged .btn:disabled { opacity:.5; cursor:not-allowed; }
+      #intro-merged .status { text-align:center; padding:18px; border-radius:12px; margin:25px 0; font-weight:600; font-size:1.1em; display:none; }
+      #intro-merged .status.success { background:#d4edda; color:#155724; border:2px solid #c3e6cb; }
+      #intro-merged .status.warning { background:#fff3cd; color:#856404; border:2px solid #ffeaa7; }
+      #intro-merged .calibration-container { display:none; margin-top:30px; }
+      #intro-merged .calibration-info { background: linear-gradient(135deg,rgba(79,172,254,.1),rgba(0,242,254,.1)); padding:25px; border-radius:12px; border:2px solid #4facfe; margin-bottom:20px; }
+      #intro-merged .progress-bar { background:#e9ecef; height:30px; border-radius:15px; overflow:hidden; margin:20px 0; }
+      #intro-merged .progress-fill { background: linear-gradient(90deg,#667eea,#764ba2); height:100%; width:0%; transition:width .5s ease; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; }
+
+      #webgazerVideoFeed {
+        position: fixed !important;
+        top: 20px !important;
+        right: 20px !important;
+        width: 320px !important;
+        height: 240px !important;
+        z-index: 9998 !important;
+        border-radius: 15px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        border: 3px solid white;
+        display: none;
+      }
+
+      .calibration-point { position:fixed; width:25px; height:25px; background:#FFD700; border:4px solid white; border-radius:50%; cursor:pointer; z-index:9997; animation:pulse 1s infinite; box-shadow:0 0 25px rgba(255,215,0,.8);}
+      @keyframes pulse {0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.3)}}
+    </style>
   </head>
   <body>
+    <div id="intro-merged">
+      <div class="container">
+        <div class="card">
+          <h1>Добро пожаловать на эксперимент!</h1>
+          <p class="subtitle">Исследование поведения пользователей с помощью eye-tracking</p>
+          <div id="instruction-section">
+            <h2>Инструкция</h2>
+            <div class="instruction-text">
+              <p><strong>Уважаемый участник!</strong></p>
+              <p>Спасибо, что согласились принять участие в исследовании. В этом эксперименте мы изучаем поведение людей при взаимодействии с веб-сайтами. Для этого мы задействуем технологию слежения за взглядом, поэтому не пугайтесь когда данная страница запросит доступ к вашей камере. Это нужно сугубо для получения данных вашего взгляда на страницу, изображение с камеры <strong>не будет записано</strong>. Все собранные данные будут использованы <strong>только в научных целях</strong> и <strong>только в обезличенном виде</strong>.</p>
+            </div>
+            <div class="highlight-box"><p><strong>Продолжительность:</strong> эксперимент займёт 10-15 минут вашего времени.</p></div>
+            <h2>Что вам нужно сделать:</h2>
+            <div class="step"><span class="step-number">1</span><span>Убедитесь, что вы находитесь в тихом месте с хорошим освещением</span></div>
+            <div class="step"><span class="step-number">2</span><span>Сядьте прямо перед экраном на расстоянии 50-70 см</span></div>
+            <div class="step"><span class="step-number">3</span><span>На следующей странице нажмите кнопку "Начать калибровку" и разрешите доступ к камере</span></div>
+            <div class="step"><span class="step-number">4</span><span>Следуйте инструкциям по калибровке - кликайте по жёлтым точкам, глядя прямо на них</span></div>
+            <div class="step"><span class="step-number">5</span><span>Страницы в эксперименте могут грузиться медленно - не обновляйте их, дождитесь завершения загрузки. Если вы столкнулись с техническим сбоем сообщите об этом</span></div>
+            <div class="step"><span class="step-number">6</span><span>После калибровки вы перейдёте к основному эксперименту, где вам нужно будет выполнить короткое задание: найти и положить в корзину товар "Apple Watch (2nd Gen)". После того как вы его найдете кликните на иконку корзины и внутри нажмите на кнопку перейти к оформлению</span></div>
+            <div class="step"><span class="step-number">7</span><span>После завершения эксперименте вам будет необходимо заполнить короткий опрос, который откроется автоматически</span></div>
+            <div class="step"><span class="step-number">8</span><span>Также после завершения система автоматически загрузит вам файл с данными, его будет необходимо прислать вместе с подтверждением о прохождении эксперимента. Это очень важно!</span></div>
+            <div class="highlight-box"><p><strong>Важно:</strong> Во время эксперимента старайтесь не двигать головой слишком резко и смотрите естественно, как обычно просматриваете веб-сайты.</p></div>
+            <div class="button-container"><button class="btn btn-calibrate" onclick="startCalibrationProcess()">Начать калибровку</button></div>
+          </div>
+          <div id="calibration-section" class="calibration-container">
+            <h2>Калибровка системы отслеживания взгляда</h2>
+            <div class="calibration-info">
+              <h3>Как проводить калибровку:</h3>
+              <ul>
+                <li>На экране появятся <strong>9 жёлтых точек</strong> в разных местах</li>
+                <li><strong>Смотрите прямо на каждую точку</strong>, а затем кликайте по ней</li>
+                <li>Старайтесь <strong>не двигать головой</strong> во время калибровки</li>
+                <li>Кликайте <strong>медленно и точно</strong>, делая паузу между кликами</li>
+              </ul>
+            </div>
+            <div class="status" id="calibration-status"></div>
+            <div class="progress-bar"><div class="progress-fill" id="calibration-progress">0 / 9</div></div>
+            <div class="button-container">
+              <button class="btn btn-calibrate" id="start-calibration-btn" onclick="startWebGazerCalibration()">Начать калибровку точек</button>
+              <button class="btn btn-start" id="proceed-btn" onclick="proceedToExperiment()">Перейти к эксперименту</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="experiment-content" style="display:none;">
+
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
       <symbol id="search" xmlns="http://www.w3.org/2000/symbolsvg" viewBox="0 0 24 24">
         <path fill="currentColor" fill-rule="evenodd" d="M11.5 2.75a8.75 8.75 0 1 0 0 17.5a8.75 8.75 0 0 0 0-17.5M1.25 11.5c0-5.66 4.59-10.25 10.25-10.25S21.75 5.84 21.75 11.5c0 2.56-.939 4.902-2.491 6.698l3.271 3.272a.75.75 0 1 1-1.06 1.06l-3.272-3.271A10.21 10.21 0 0 1 11.5 21.75c-5.66 0-10.25-4.59-10.25-10.25" clip-rule="evenodd" />
@@ -1003,6 +1109,8 @@
           </div>
         </div>
     
+    </div>
+
    <script src="webgazer.js"></script>
 
    <script>
@@ -1018,6 +1126,8 @@
     const SAMPLE_RATE_MS = 33; // точка каждые ~33 мс ≈ 30 точек/сек
     const SCROLL_SAMPLE_RATE_MS = 50; // записываем скролл до 20 раз/сек
     const BANNER_AOI_PADDING_PX = 0; // дополнительная зона AOI вокруг баннера
+    const WEBGAZER_TRACKER = 'clmtrackr';
+    const WEBGAZER_REGRESSION = 'ridge';
 
     window._bannerRectViewport = null;
     window._bannerRectPage = null;
@@ -1086,18 +1196,52 @@
       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-
-      if (!sessionStorage.getItem('calibrationComplete')) {
-        alert('Сначала пройдите калибровку!');
-        window.location.href = 'intro.html';
-        return;
-      }
-
+    function ensureWebGazerStarted(stageLabel) {
       if (!window.webgazer) {
         console.error('❌ WebGazer не загрузился');
-        return;
+        return Promise.resolve(false);
       }
+
+      webgazer
+        .saveDataAcrossSessions(true)
+        .showVideoPreview(false)
+        .showFaceOverlay(false)
+        .showFaceFeedbackBox(false)
+        .showPredictionPoints(false)
+        .applyKalmanFilter(true);
+
+      try {
+        if (typeof webgazer.setRegression === 'function') {
+          webgazer.setRegression(WEBGAZER_REGRESSION);
+        }
+        if (typeof webgazer.setTracker === 'function') {
+          webgazer.setTracker(WEBGAZER_TRACKER);
+        }
+      } catch (configError) {
+        console.warn('⚠️ Не удалось применить конфигурацию tracker/regression:', configError);
+      }
+
+      if (window._webgazerStarted) {
+        return Promise.resolve(true);
+      }
+
+      return Promise.resolve(webgazer.begin())
+        .then(function () {
+          window._webgazerStarted = true;
+          if (typeof webgazer.removeMouseEventListeners === 'function') {
+            webgazer.removeMouseEventListeners();
+          }
+          return true;
+        })
+        .catch(function (error) {
+          console.error('❌ Ошибка запуска WebGazer во время ' + stageLabel + ' (tracker=' + WEBGAZER_TRACKER + '):', error);
+          return false;
+        });
+    }
+
+    function initExperimentTracking() {
+      if (window._trackingInitialized) return;
+      window._trackingInitialized = true;
 
       // Уникальный ID участника
       window._participantId  = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
@@ -1124,59 +1268,179 @@
         recordScrollEvent('scroll');
       }, { passive: true });
 
-      console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
+      webgazer.setGazeListener(function (data) {
+        if (!data) return;
+        const now = Date.now();
+        if (now - lastSample < SAMPLE_RATE_MS) return;
+        lastSample = now;
+        const view = getViewportMetrics();
+        updateBannerRect();
+        const point = {
+          x: Math.round(data.x),
+          y: Math.round(data.y),
+          t: now - window._sessionStart,
+          page_x: Math.round(data.x + view.scroll_x),
+          page_y: Math.round(data.y + view.scroll_y),
+          scroll_x: view.scroll_x,
+          scroll_y: view.scroll_y,
+          viewport_w: view.viewport_w,
+          viewport_h: view.viewport_h,
+          doc_w: view.doc_w,
+          doc_h: view.doc_h,
+          dpr: view.dpr
+        };
 
-      webgazer
-        // Загружаем калибровку из intro.html через штатное хранилище WebGazer
-        .saveDataAcrossSessions(true)
-        .showVideoPreview(false)
-        .showFaceOverlay(false)
-        .showFaceFeedbackBox(false)
-        .showPredictionPoints(false)
-        .applyKalmanFilter(true)
-        .setGazeListener(function (data) {
-          if (!data) return;
+        point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
+        point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
+        point.on_banner = point.on_banner_viewport || point.on_banner_page;
+        if (point.on_banner) {
+          window._bannerHits++;
+        }
+
+        window._gazePoints.push(point);
+        if (window._gazePoints.length % 100 === 0)
+          console.log('📊 Точек собрано:', window._gazePoints.length);
+      });
+
+      ensureWebGazerStarted('эксперимента').then(function (started) {
+        if (!started) {
+          window._trackingInitialized = false;
+          return;
+        }
+        console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
+      });
+    }
+
+    let calibrationStarted = false;
+    let calibrationComplete = false;
+    let calibrationPoints = [];
+    let currentCalibrationPoint = 0;
+    const totalCalibrationPoints = 9;
+    const totalCalibrationRounds = 2;
+    const calibrationDwellMs = 500;
+    let currentCalibrationRound = 1;
+
+    function showStatus(message, type) {
+      const statusEl = document.getElementById('calibration-status');
+      statusEl.textContent = message;
+      statusEl.className = 'status ' + type;
+      statusEl.style.display = 'block';
+    }
+
+    function updateProgress(current, total) {
+      const progressEl = document.getElementById('calibration-progress');
+      const percentage = (current / total) * 100;
+      progressEl.style.width = percentage + '%';
+      progressEl.textContent = current + ' / ' + total;
+    }
+
+    function startCalibrationProcess() {
+      document.getElementById('instruction-section').style.display = 'none';
+      document.getElementById('calibration-section').style.display = 'block';
+      showStatus('⏳ Инициализация камеры...', 'warning');
+      document.getElementById('start-calibration-btn').disabled = true;
+
+      ensureWebGazerStarted('калибровки').then((started) => {
+        document.getElementById('start-calibration-btn').disabled = false;
+        if (!started) {
+          showStatus('❌ Не удалось запустить камеру. Проверьте доступ к камере и обновите страницу.', 'warning');
+          return;
+        }
+        showStatus('✅ Камера активна! Нажмите "Начать калибровку точек"', 'success');
+      });
+    }
+
+    function startWebGazerCalibration() {
+      if (calibrationStarted) return;
+      calibrationStarted = true;
+      currentCalibrationPoint = 0;
+      currentCalibrationRound = 1;
+      updateProgress(0, totalCalibrationPoints * totalCalibrationRounds);
+      renderCalibrationRound();
+      showStatus('👀 Раунд 1/2: смотрите на точку ~0.5 сек, затем кликайте по ней', 'warning');
+      document.getElementById('start-calibration-btn').disabled = true;
+    }
+
+    function renderCalibrationRound() {
+      document.querySelectorAll('.calibration-point').forEach(el => el.remove());
+      calibrationPoints = [];
+      const positions = [
+        { x: 10, y: 10 }, { x: 50, y: 10 }, { x: 90, y: 10 },
+        { x: 10, y: 50 }, { x: 50, y: 50 }, { x: 90, y: 50 },
+        { x: 10, y: 90 }, { x: 50, y: 90 }, { x: 90, y: 90 }
+      ];
+      positions.forEach((pos) => {
+        const point = document.createElement('div');
+        point.className = 'calibration-point';
+        point.style.left = pos.x + '%';
+        point.style.top = pos.y + '%';
+        point.dataset.readyAt = String(Date.now() + calibrationDwellMs);
+        point.onclick = function() {
           const now = Date.now();
-          if (now - lastSample < SAMPLE_RATE_MS) return;
-          lastSample = now;
-          const view = getViewportMetrics();
-          updateBannerRect();
-          const point = {
-            x: Math.round(data.x),
-            y: Math.round(data.y),
-            t: now - window._sessionStart,
-            page_x: Math.round(data.x + view.scroll_x),
-            page_y: Math.round(data.y + view.scroll_y),
-            scroll_x: view.scroll_x,
-            scroll_y: view.scroll_y,
-            viewport_w: view.viewport_w,
-            viewport_h: view.viewport_h,
-            doc_w: view.doc_w,
-            doc_h: view.doc_h,
-            dpr: view.dpr
-          };
-
-          point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
-          point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
-          point.on_banner = point.on_banner_viewport || point.on_banner_page;
-          if (point.on_banner) {
-            window._bannerHits++;
+          const readyAt = Number(this.dataset.readyAt || 0);
+          if (now < readyAt) {
+            const waitMs = Math.max(0, readyAt - now);
+            showStatus(`Удерживайте взгляд на точке ещё ${waitMs} мс перед кликом`, 'warning');
+            return;
           }
-
-          window._gazePoints.push(point);
-          if (window._gazePoints.length % 100 === 0)
-            console.log('📊 Точек собрано:', window._gazePoints.length);
-        })
-        .begin()
-        .then(function () {
-          // Полностью отключаем обучение по мыши (click/move listeners)
-          if (typeof webgazer.removeMouseEventListeners === 'function') {
-            webgazer.removeMouseEventListeners();
+          const rect = this.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          if (typeof webgazer !== 'undefined' && typeof webgazer.recordScreenPosition === 'function') {
+            webgazer.recordScreenPosition(centerX, centerY, 'click');
           }
-        })
-        .catch(function (error) {
-          console.error('❌ Ошибка запуска WebGazer:', error);
-        });
+          this.style.display = 'none';
+          currentCalibrationPoint++;
+          updateProgress(currentCalibrationPoint, totalCalibrationPoints * totalCalibrationRounds);
+          const roundCompleted = currentCalibrationPoint % totalCalibrationPoints === 0;
+          if (currentCalibrationPoint === totalCalibrationPoints * totalCalibrationRounds) {
+            finishCalibration();
+          } else if (roundCompleted) {
+            currentCalibrationRound++;
+            showStatus(`✅ Раунд ${currentCalibrationRound - 1}/2 завершён. Начинаем раунд ${currentCalibrationRound}/2`, 'success');
+            renderCalibrationRound();
+          } else {
+            const roundPoint = currentCalibrationPoint - (currentCalibrationRound - 1) * totalCalibrationPoints;
+            showStatus(`Раунд ${currentCalibrationRound}/2: точка ${roundPoint}/${totalCalibrationPoints} откалибрована`, 'success');
+          }
+        };
+        document.body.appendChild(point);
+        calibrationPoints.push(point);
+      });
+    }
+
+    function finishCalibration() {
+      calibrationComplete = true;
+      calibrationPoints.forEach(point => {
+        if (point && point.parentNode) point.parentNode.removeChild(point);
+      });
+      showStatus('Калибровка (2 раунда) завершена успешно!', 'success');
+      document.getElementById('proceed-btn').style.display = 'inline-block';
+      document.getElementById('start-calibration-btn').textContent = 'Повторить калибровку';
+      document.getElementById('start-calibration-btn').disabled = false;
+      calibrationStarted = false;
+    }
+
+    function proceedToExperiment() {
+      if (!calibrationComplete) {
+        showStatus('Сначала пройдите калибровку!', 'warning');
+        return;
+      }
+
+      sessionStorage.setItem('calibrationComplete', 'true');
+      document.getElementById('intro-merged').style.display = 'none';
+      document.getElementById('experiment-content').style.display = 'block';
+      initExperimentTracking();
+      window.scrollTo(0, 0);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      if (sessionStorage.getItem('calibrationComplete')) {
+        calibrationComplete = true;
+        document.getElementById('intro-merged').style.display = 'none';
+        document.getElementById('experiment-content').style.display = 'block';
+        initExperimentTracking();
+      }
     });
 
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
