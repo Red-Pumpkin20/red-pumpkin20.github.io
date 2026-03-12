@@ -21,9 +21,51 @@
       html[lang="ru"] .navbar .nav-link { font-size: 0.92rem; }
       html[lang="ru"] .section-title h3 { font-size: 1.55rem; }
       html[lang="ru"] .btn { white-space: normal; }
+
+      #intro-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.92);
+        z-index: 100000;
+        overflow: auto;
+        color: #fff;
+      }
+      .intro-card {
+        max-width: 860px;
+        margin: 28px auto;
+        background: #121a2a;
+        border-radius: 14px;
+        padding: 24px;
+      }
+      .calibration-point {
+        width: 28px;
+        height: 28px;
+        background: #ff4757;
+        border-radius: 50%;
+        position: fixed;
+        transform: translate(-50%, -50%);
+        z-index: 100001;
+        cursor: pointer;
+        border: 2px solid #fff;
+      }
+      #calibration-progress-wrap {height: 12px; background:#334155; border-radius:8px; overflow:hidden;}
+      #calibration-progress-fill {height:100%; width:0%; background:#22c55e; transition:width .2s ease;}
     </style>
   </head>
   <body>
+    <div id="intro-overlay">
+      <div class="intro-card">
+        <h2>Инструкция и калибровка</h2>
+        <p>1) Разрешите доступ к камере. 2) Кликните по 9 точкам (2 раунда). 3) После этого начнётся эксперимент на этой же странице.</p>
+        <div id="calibration-status" style="margin:10px 0; color:#93c5fd;">Готово к запуску калибровки.</div>
+        <div id="calibration-progress-wrap"><div id="calibration-progress-fill"></div></div>
+        <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button id="start-calibration-flow" class="btn btn-primary">Запустить калибровку</button>
+          <button id="start-points" class="btn btn-warning" disabled>Начать точки</button>
+          <button id="enter-experiment" class="btn btn-success" style="display:none;">Начать эксперимент</button>
+        </div>
+      </div>
+    </div>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
       <symbol id="search" xmlns="http://www.w3.org/2000/symbolsvg" viewBox="0 0 24 24">
         <path fill="currentColor" fill-rule="evenodd" d="M11.5 2.75a8.75 8.75 0 1 0 0 17.5a8.75 8.75 0 0 0 0-17.5M1.25 11.5c0-5.66 4.59-10.25 10.25-10.25S21.75 5.84 21.75 11.5c0 2.56-.939 4.902-2.491 6.698l3.271 3.272a.75.75 0 1 1-1.06 1.06l-3.272-3.271A10.21 10.21 0 0 1 11.5 21.75c-5.66 0-10.25-4.59-10.25-10.25" clip-rule="evenodd" />
@@ -1156,45 +1198,115 @@
         webgazer.removeMouseEventListeners();
       }
 
-      const restoredLen = (webgazer.getRegression?.()[0]?.getData?.() || []).length;
-      console.log('📦 Regression data length after begin:', restoredLen);
-      if (!restoredLen) {
-        throw new Error('Regression model пустая. Повторите калибровку.');
-      }
-
       console.log('✅ WebGazer успешно инициализирован');
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    let calibrationStarted = false;
+    let calibrationComplete = false;
+    let currentCalibrationPoint = 0;
+    const totalCalibrationPoints = 9;
+    const totalCalibrationRounds = 2;
+    const calibrationDwellMs = 500;
+    let lastSample = 0;
+    let lastScrollSample = 0;
 
-      if (!sessionStorage.getItem('calibrationComplete')) {
-        alert('Сначала пройдите калибровку!');
-        window.location.href = 'intro.html';
-        return;
+    function setCalibrationStatus(message) {
+      const el = document.getElementById('calibration-status');
+      if (el) el.textContent = message;
+    }
+
+    function updateCalibrationProgress(current) {
+      const fill = document.getElementById('calibration-progress-fill');
+      if (!fill) return;
+      const total = totalCalibrationPoints * totalCalibrationRounds;
+      fill.style.width = `${(current / total) * 100}%`;
+    }
+
+    function renderCalibrationRound() {
+      document.querySelectorAll('.calibration-point').forEach((el) => el.remove());
+      const positions = [
+        { x: 10, y: 10 }, { x: 50, y: 10 }, { x: 90, y: 10 },
+        { x: 10, y: 50 }, { x: 50, y: 50 }, { x: 90, y: 50 },
+        { x: 10, y: 90 }, { x: 50, y: 90 }, { x: 90, y: 90 }
+      ];
+
+      positions.forEach((pos) => {
+        const point = document.createElement('div');
+        point.className = 'calibration-point';
+        point.style.left = `${pos.x}%`;
+        point.style.top = `${pos.y}%`;
+        point.dataset.readyAt = String(Date.now() + calibrationDwellMs);
+        point.addEventListener('click', function () {
+          const now = Date.now();
+          if (now < Number(point.dataset.readyAt || 0)) return;
+          const rect = point.getBoundingClientRect();
+          const x = rect.left + rect.width / 2;
+          const y = rect.top + rect.height / 2;
+          webgazer.recordScreenPosition(x, y, 'click');
+          point.remove();
+          currentCalibrationPoint += 1;
+          updateCalibrationProgress(currentCalibrationPoint);
+
+          const total = totalCalibrationPoints * totalCalibrationRounds;
+          if (currentCalibrationPoint >= total) {
+            calibrationComplete = true;
+            setCalibrationStatus('✅ Калибровка завершена. Нажмите "Начать эксперимент"');
+            document.getElementById('enter-experiment').style.display = 'inline-block';
+            return;
+          }
+
+          if (currentCalibrationPoint % totalCalibrationPoints === 0) {
+            renderCalibrationRound();
+          }
+        });
+        document.body.appendChild(point);
+      });
+    }
+
+    async function startCalibrationFlow() {
+      if (calibrationStarted) return;
+      calibrationStarted = true;
+      setCalibrationStatus('⏳ Инициализация камеры...');
+      document.getElementById('start-calibration-flow').disabled = true;
+      try {
+        await startWebgazer();
+        setCalibrationStatus('✅ Камера активна. Нажмите "Начать точки"');
+        document.getElementById('start-points').disabled = false;
+      } catch (error) {
+        console.error('❌ Не удалось запустить WebGazer:', error);
+        setCalibrationStatus('❌ Ошибка запуска камеры. Перезагрузите страницу и попробуйте снова.');
       }
+    }
 
-      if (!window.webgazer) {
-        console.error('❌ WebGazer не загрузился');
-        return;
-      }
-
-      // Уникальный ID участника
-      window._participantId  = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-      window._sessionStart   = Date.now();
-      window._gazePoints     = [];
-      window._bannerHits     = 0;
-      window._scrollEvents   = [];
-      let lastSample         = 0;
-      let lastScrollSample   = 0;
-
+    function activateExperimentCollection() {
+      window._sessionStart = Date.now();
+      window._gazePoints = [];
+      window._bannerHits = 0;
+      window._scrollEvents = [];
       updateBannerRect();
       recordScrollEvent('init');
 
-      window.addEventListener('resize', function () {
+      webgazer.setGazeListener(function (data) {
+        if (!data) return;
+        const now = Date.now();
+        if (now - lastSample < SAMPLE_RATE_MS) return;
+        lastSample = now;
+        const view = getViewportMetrics();
         updateBannerRect();
-        recordScrollEvent('resize');
+        const point = {
+          x: Math.round(data.x), y: Math.round(data.y), t: now - window._sessionStart,
+          page_x: Math.round(data.x + view.scroll_x), page_y: Math.round(data.y + view.scroll_y),
+          scroll_x: view.scroll_x, scroll_y: view.scroll_y,
+          viewport_w: view.viewport_w, viewport_h: view.viewport_h, doc_w: view.doc_w, doc_h: view.doc_h, dpr: view.dpr
+        };
+        point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
+        point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
+        point.on_banner = point.on_banner_viewport || point.on_banner_page;
+        if (point.on_banner) window._bannerHits++;
+        window._gazePoints.push(point);
       });
 
+      window.addEventListener('resize', function () { updateBannerRect(); recordScrollEvent('resize'); });
       window.addEventListener('scroll', function () {
         const now = Date.now();
         if (now - lastScrollSample < SCROLL_SAMPLE_RATE_MS) return;
@@ -1202,47 +1314,30 @@
         updateBannerRect();
         recordScrollEvent('scroll');
       }, { passive: true });
+    }
 
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!window.webgazer) {
+        setCalibrationStatus('❌ WebGazer не загрузился.');
+        return;
+      }
+
+      window._participantId = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
-      webgazer.setGazeListener(function (data) {
-          if (!data) return;
-          const now = Date.now();
-          if (now - lastSample < SAMPLE_RATE_MS) return;
-          lastSample = now;
-          const view = getViewportMetrics();
-          updateBannerRect();
-          const point = {
-            x: Math.round(data.x),
-            y: Math.round(data.y),
-            t: now - window._sessionStart,
-            page_x: Math.round(data.x + view.scroll_x),
-            page_y: Math.round(data.y + view.scroll_y),
-            scroll_x: view.scroll_x,
-            scroll_y: view.scroll_y,
-            viewport_w: view.viewport_w,
-            viewport_h: view.viewport_h,
-            doc_w: view.doc_w,
-            doc_h: view.doc_h,
-            dpr: view.dpr
-          };
-
-          point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
-          point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
-          point.on_banner = point.on_banner_viewport || point.on_banner_page;
-          if (point.on_banner) {
-            window._bannerHits++;
-          }
-
-          window._gazePoints.push(point);
-          if (window._gazePoints.length % 100 === 0)
-            console.log('📊 Точек собрано:', window._gazePoints.length);
-        });
-
-      startWebgazer().catch(function (error) {
-        console.error('❌ Не удалось запустить WebGazer:', error);
-        alert('Не удалось запустить отслеживание взгляда. Повторите калибровку ещё раз.');
-        window.location.href = 'intro.html';
+      document.getElementById('start-calibration-flow').addEventListener('click', startCalibrationFlow);
+      document.getElementById('start-points').addEventListener('click', function () {
+        currentCalibrationPoint = 0;
+        updateCalibrationProgress(0);
+        setCalibrationStatus('👀 Кликайте по точкам (2 раунда)');
+        renderCalibrationRound();
+      });
+      document.getElementById('enter-experiment').addEventListener('click', function () {
+        if (!calibrationComplete) return;
+        document.querySelectorAll('.calibration-point').forEach((el) => el.remove());
+        const overlay = document.getElementById('intro-overlay');
+        if (overlay) overlay.style.display = 'none';
+        activateExperimentCollection();
       });
     });
 
