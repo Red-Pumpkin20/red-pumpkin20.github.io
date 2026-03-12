@@ -1086,6 +1086,96 @@
       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
+    function keepWebgazerVideoHiddenButSized() {
+      const ids = [
+        'webgazerVideoContainer',
+        'webgazerVideoFeed',
+        'webgazerVideoCanvas',
+        'webgazerFaceOverlay',
+        'webgazerFaceFeedbackBox',
+        'webgazerGazeDot'
+      ];
+
+      ids.forEach(function (id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = 'block';
+        el.style.position = 'fixed';
+        el.style.left = '-9999px';
+        el.style.top = '-9999px';
+        el.style.width = '320px';
+        el.style.height = '240px';
+        el.style.opacity = '0.01';
+        el.style.pointerEvents = 'none';
+        el.style.zIndex = '-1';
+      });
+    }
+
+    async function waitForWebgazerVideoReady(timeoutMs) {
+      const startedAt = Date.now();
+      while (Date.now() - startedAt < timeoutMs) {
+        const feed = document.getElementById('webgazerVideoFeed');
+        if (feed && feed.videoWidth > 0 && feed.videoHeight > 0) {
+          keepWebgazerVideoHiddenButSized();
+          if (feed.clientWidth > 0 && feed.clientHeight > 0) {
+            return true;
+          }
+        }
+        await new Promise(function (resolve) { setTimeout(resolve, 120); });
+      }
+      return false;
+    }
+
+    async function startWebgazerWithRetry(maxAttempts) {
+      let attempt = 0;
+      while (attempt < maxAttempts) {
+        attempt += 1;
+        try {
+          console.log('🧪 Запуск WebGazer, попытка:', attempt);
+          try {
+            await webgazer.setCameraConstraints({ video: { facingMode: 'user' } });
+          } catch (constraintsError) {
+            console.warn('⚠️ Не удалось применить camera constraints:', constraintsError);
+          }
+
+          await webgazer
+            .saveDataAcrossSessions(true)
+            .showVideoPreview(true)
+            .showVideo(true)
+            .showFaceOverlay(false)
+            .showFaceFeedbackBox(false)
+            .showPredictionPoints(false)
+            .applyKalmanFilter(true)
+            .begin();
+
+          const ready = await waitForWebgazerVideoReady(6000);
+          if (!ready) {
+            throw new Error('webgazerVideoFeed не получил корректный размер');
+          }
+
+          if (typeof webgazer.removeMouseEventListeners === 'function') {
+            webgazer.removeMouseEventListeners();
+          }
+
+          console.log('✅ WebGazer успешно инициализирован');
+          return true;
+        } catch (error) {
+          console.error('❌ Ошибка запуска WebGazer (попытка ' + attempt + '):', error);
+          try {
+            const container = document.getElementById('webgazerVideoContainer');
+            const gazeDot = document.getElementById('webgazerGazeDot');
+            if (container && gazeDot) {
+              webgazer.end();
+            }
+          } catch (endError) {
+            console.warn('⚠️ Не удалось корректно завершить WebGazer после ошибки:', endError);
+          }
+          await new Promise(function (resolve) { setTimeout(resolve, 700); });
+        }
+      }
+      return false;
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
 
       if (!sessionStorage.getItem('calibrationComplete')) {
@@ -1126,15 +1216,7 @@
 
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
 
-      webgazer
-        // Загружаем калибровку из intro.html через штатное хранилище WebGazer
-        .saveDataAcrossSessions(true)
-        .showVideoPreview(false)
-        .showFaceOverlay(false)
-        .showFaceFeedbackBox(false)
-        .showPredictionPoints(false)
-        .applyKalmanFilter(true)
-        .setGazeListener(function (data) {
+      webgazer.setGazeListener(function (data) {
           if (!data) return;
           const now = Date.now();
           if (now - lastSample < SAMPLE_RATE_MS) return;
@@ -1166,17 +1248,13 @@
           window._gazePoints.push(point);
           if (window._gazePoints.length % 100 === 0)
             console.log('📊 Точек собрано:', window._gazePoints.length);
-        })
-        .begin()
-        .then(function () {
-          // Полностью отключаем обучение по мыши (click/move listeners)
-          if (typeof webgazer.removeMouseEventListeners === 'function') {
-            webgazer.removeMouseEventListeners();
-          }
-        })
-        .catch(function (error) {
-          console.error('❌ Ошибка запуска WebGazer:', error);
         });
+
+      startWebgazerWithRetry(3).then(function (ok) {
+        if (!ok) {
+          console.error('❌ Не удалось запустить WebGazer после нескольких попыток');
+        }
+      });
     });
 
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────

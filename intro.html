@@ -380,6 +380,31 @@
             progressEl.textContent = current + ' / ' + total;
         }
 
+        function keepWebgazerVideoHiddenButSized() {
+            const ids = [
+                'webgazerVideoContainer',
+                'webgazerVideoFeed',
+                'webgazerVideoCanvas',
+                'webgazerFaceOverlay',
+                'webgazerFaceFeedbackBox',
+                'webgazerGazeDot'
+            ];
+
+            ids.forEach((id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.style.display = 'block';
+                el.style.position = 'fixed';
+                el.style.left = '-9999px';
+                el.style.top = '-9999px';
+                el.style.width = '320px';
+                el.style.height = '240px';
+                el.style.opacity = '0.01';
+                el.style.pointerEvents = 'none';
+                el.style.zIndex = '-1';
+            });
+        }
+
         function startCalibrationProcess() {
             document.getElementById('instruction-section').style.display = 'none';
             document.getElementById('calibration-section').style.display = 'block';
@@ -388,10 +413,23 @@
             document.getElementById('start-calibration-btn').disabled = true;
 
             // Используем штатное сохранение калибровки между intro.html и experiment.html
-            webgazer.saveDataAcrossSessions(true);
+            webgazer
+                .saveDataAcrossSessions(true)
+                .showVideoPreview(true)
+                .showVideo(true)
+                .showFaceOverlay(false)
+                .showFaceFeedbackBox(false)
+                .showPredictionPoints(false)
+                .applyKalmanFilter(true);
+
+            Promise.resolve(webgazer.setCameraConstraints({ video: { facingMode: 'user' } }))
+                .catch((error) => {
+                    console.warn('⚠️ Не удалось применить camera constraints:', error);
+                });
 
             // БЕЗ gaze listener - он не нужен для калибровки!
             Promise.resolve(webgazer.begin()).then(() => {
+                keepWebgazerVideoHiddenButSized();
                 // Отключаем штатные mousemove-листенеры WebGazer, чтобы калибровка шла только по кликам.
                 if (typeof webgazer.removeMouseEventListeners === 'function') {
                     webgazer.removeMouseEventListeners();
@@ -403,12 +441,8 @@
                 document.getElementById('start-calibration-btn').disabled = false;
             });
 
-            // Полностью скрываем всё визуальное - видео, сетку лица
-            webgazer.showVideoPreview(false)
-                    .showFaceOverlay(false)
-                    .showFaceFeedbackBox(false)
-                    .showPredictionPoints(false)
-                    .applyKalmanFilter(true);
+            // Держим video-feed невидимым, но с ненулевым размером (нужно для стабильной работы FaceMesh)
+            setTimeout(keepWebgazerVideoHiddenButSized, 100);
 
         }
 
@@ -514,7 +548,15 @@
 
         window.addEventListener('beforeunload', function() {
             if (typeof webgazer !== 'undefined') {
-                webgazer.end();
+                const container = document.getElementById('webgazerVideoContainer');
+                const gazeDot = document.getElementById('webgazerGazeDot');
+                if (container && gazeDot) {
+                    try {
+                        webgazer.end();
+                    } catch (error) {
+                        console.warn('⚠️ Игнорируем ошибку webgazer.end() при выгрузке страницы:', error);
+                    }
+                }
             }
         });
     </script>
