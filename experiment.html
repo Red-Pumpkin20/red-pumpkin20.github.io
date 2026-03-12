@@ -1018,6 +1018,7 @@
     const SAMPLE_RATE_MS = 33; // точка каждые ~33 мс ≈ 30 точек/сек
     const SCROLL_SAMPLE_RATE_MS = 50; // записываем скролл до 20 раз/сек
     const BANNER_AOI_PADDING_PX = 0; // дополнительная зона AOI вокруг баннера
+    const CALIBRATION_DATA_KEY = 'wgCalibrationDataV1';
 
     window._bannerRectViewport = null;
     window._bannerRectPage = null;
@@ -1092,8 +1093,7 @@
         'webgazerVideoFeed',
         'webgazerVideoCanvas',
         'webgazerFaceOverlay',
-        'webgazerFaceFeedbackBox',
-        'webgazerGazeDot'
+        'webgazerFaceFeedbackBox'
       ];
 
       ids.forEach(function (id) {
@@ -1109,6 +1109,40 @@
         el.style.pointerEvents = 'none';
         el.style.zIndex = '-1';
       });
+    }
+
+    function getPersistedCalibrationData() {
+      const raw = sessionStorage.getItem(CALIBRATION_DATA_KEY) || localStorage.getItem(CALIBRATION_DATA_KEY);
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.error('❌ Не удалось распарсить сохранённую калибровку:', error);
+        return [];
+      }
+    }
+
+    function restoreCalibrationDataToRegression() {
+      const savedData = getPersistedCalibrationData();
+      if (!savedData.length) {
+        console.error('❌ Сохранённая калибровка отсутствует или пуста');
+        return false;
+      }
+
+      try {
+        const regression = webgazer.getRegression && webgazer.getRegression()[0];
+        if (!regression || typeof regression.setData !== 'function') {
+          console.error('❌ У WebGazer нет regression.setData');
+          return false;
+        }
+        regression.setData(savedData);
+        console.log('♻️ Калибровка восстановлена в модели. Точек:', savedData.length);
+        return true;
+      } catch (error) {
+        console.error('❌ Ошибка восстановления калибровки в модель:', error);
+        return false;
+      }
     }
 
     async function waitForWebgazerVideoReady(timeoutMs) {
@@ -1157,6 +1191,15 @@
             webgazer.removeMouseEventListeners();
           }
 
+          if (!restoreCalibrationDataToRegression()) {
+            throw new Error('Не удалось восстановить калибровку в regression model');
+          }
+
+          const restoredLen = (webgazer.getRegression?.()[0]?.getData?.() || []).length;
+          if (!restoredLen) {
+            throw new Error('Regression model пустая после восстановления');
+          }
+
           console.log('✅ WebGazer успешно инициализирован');
           return true;
         } catch (error) {
@@ -1180,6 +1223,13 @@
 
       if (!sessionStorage.getItem('calibrationComplete')) {
         alert('Сначала пройдите калибровку!');
+        window.location.href = 'intro.html';
+        return;
+      }
+
+      const persistedCalibration = getPersistedCalibrationData();
+      if (!persistedCalibration.length) {
+        alert('Калибровка не была сохранена. Пожалуйста, пройдите калибровку заново.');
         window.location.href = 'intro.html';
         return;
       }

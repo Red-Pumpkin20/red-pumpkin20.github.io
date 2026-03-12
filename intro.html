@@ -363,6 +363,7 @@
         const totalCalibrationPoints = 9;
         const totalCalibrationRounds = 2;
         const calibrationDwellMs = 500;
+        const CALIBRATION_DATA_KEY = 'wgCalibrationDataV1';
         let currentCalibrationRound = 1;
 
         function showStatus(message, type) {
@@ -386,8 +387,7 @@
                 'webgazerVideoFeed',
                 'webgazerVideoCanvas',
                 'webgazerFaceOverlay',
-                'webgazerFaceFeedbackBox',
-                'webgazerGazeDot'
+                'webgazerFaceFeedbackBox'
             ];
 
             ids.forEach((id) => {
@@ -403,6 +403,27 @@
                 el.style.pointerEvents = 'none';
                 el.style.zIndex = '-1';
             });
+        }
+
+        function persistCalibrationData() {
+            try {
+                const regression = webgazer.getRegression && webgazer.getRegression()[0];
+                const data = regression && regression.getData ? regression.getData() : [];
+                if (!Array.isArray(data) || data.length === 0) {
+                    showStatus('❌ Калибровка не сохранилась. Повторите калибровку.', 'warning');
+                    return false;
+                }
+
+                const payload = JSON.stringify(data);
+                sessionStorage.setItem(CALIBRATION_DATA_KEY, payload);
+                localStorage.setItem(CALIBRATION_DATA_KEY, payload);
+                console.log('💾 Калибровка сохранена. Точек регрессии:', data.length);
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка сохранения калибровки:', error);
+                showStatus('❌ Ошибка сохранения калибровки. Повторите попытку.', 'warning');
+                return false;
+            }
         }
 
         function startCalibrationProcess() {
@@ -529,6 +550,11 @@
             });
 
             showStatus('Калибровка (2 раунда) завершена успешно!', 'success');
+
+            if (!persistCalibrationData()) {
+                calibrationComplete = false;
+                return;
+            }
 
             document.getElementById('proceed-btn').style.display = 'inline-block';
             document.getElementById('start-calibration-btn').textContent = 'Повторить калибровку';
