@@ -25,17 +25,67 @@
       #intro-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(15, 23, 42, 0.92);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         z-index: 100000;
         overflow: auto;
         color: #fff;
+        padding: 20px;
       }
-      .intro-card {
-        max-width: 860px;
-        margin: 28px auto;
-        background: #121a2a;
-        border-radius: 14px;
-        padding: 24px;
+      #intro-overlay .container {
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      #intro-overlay .card {
+        background: white;
+        color: #2c3e50;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.3);
+        padding: 50px;
+      }
+      #intro-overlay h1 {color:#2c3e50; font-size:2.4em; text-align:center; margin-bottom:8px;}
+      #intro-overlay .subtitle {color:#7f8c8d; text-align:center; margin-bottom:24px;}
+      #intro-overlay h2 {color:#667eea; font-size:1.6em; margin:20px 0 14px;}
+      #intro-overlay .instruction-text {color:#34495e; line-height:1.7; margin-bottom:14px;}
+      #intro-overlay .highlight-box {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-left: 5px solid #667eea;
+        padding: 18px;
+        margin: 18px 0;
+        border-radius: 10px;
+      }
+      #intro-overlay .step {
+        background: linear-gradient(135deg, rgba(102,126,234,.08), rgba(118,75,162,.08));
+        padding: 14px 18px;
+        margin: 10px 0;
+        border-radius: 12px;
+        border-left: 5px solid #667eea;
+      }
+      #intro-overlay .step-number {
+        display:inline-block; width:28px; height:28px; border-radius:50%; line-height:28px; text-align:center;
+        color:#fff; font-weight:700; margin-right:10px; background:linear-gradient(135deg, #667eea, #764ba2);
+      }
+      #intro-overlay .button-container {display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:20px;}
+      #intro-overlay .btn {min-width:220px; padding:14px 22px; font-weight:700; border:none; border-radius:12px;}
+      #intro-overlay .btn-calibrate {background:linear-gradient(135deg, #667eea, #764ba2); color:#fff;}
+      #intro-overlay .btn-start {background:linear-gradient(135deg, #56ab2f, #a8e063); color:#fff; display:none;}
+      #intro-overlay .calibration-container {display:none; margin-top:10px;}
+      #intro-overlay .calibration-info {
+        background: linear-gradient(135deg, rgba(79,172,254,.1), rgba(0,242,254,.1));
+        padding: 18px;
+        border-radius: 12px;
+        border: 2px solid #4facfe;
+        margin-bottom: 14px;
+      }
+      #intro-overlay .status {
+        text-align:center; padding:12px; border-radius:10px; margin:12px 0; font-weight:600; display:none;
+      }
+      #intro-overlay .status.success {background:#d4edda; color:#155724; border:2px solid #c3e6cb;}
+      #intro-overlay .status.warning {background:#fff3cd; color:#856404; border:2px solid #ffeaa7;}
+      #intro-overlay .progress-bar {background:#e9ecef; height:28px; border-radius:14px; overflow:hidden; margin:12px 0;}
+      #intro-overlay .progress-fill {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        height:100%; width:0%; transition:width .2s ease; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700;
       }
       .calibration-point {
         width: 28px;
@@ -48,21 +98,41 @@
         cursor: pointer;
         border: 2px solid #fff;
       }
-      #calibration-progress-wrap {height: 12px; background:#334155; border-radius:8px; overflow:hidden;}
-      #calibration-progress-fill {height:100%; width:0%; background:#22c55e; transition:width .2s ease;}
     </style>
   </head>
   <body>
     <div id="intro-overlay">
-      <div class="intro-card">
-        <h2>Инструкция и калибровка</h2>
-        <p>1) Разрешите доступ к камере. 2) Кликните по 9 точкам (2 раунда). 3) После этого начнётся эксперимент на этой же странице.</p>
-        <div id="calibration-status" style="margin:10px 0; color:#93c5fd;">Готово к запуску калибровки.</div>
-        <div id="calibration-progress-wrap"><div id="calibration-progress-fill"></div></div>
-        <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button id="start-calibration-flow" class="btn btn-primary">Запустить калибровку</button>
-          <button id="start-points" class="btn btn-warning" disabled>Начать точки</button>
-          <button id="enter-experiment" class="btn btn-success" style="display:none;">Начать эксперимент</button>
+      <div class="container">
+        <div class="card">
+          <div id="instruction-section">
+            <h1>Инструкция к эксперименту</h1>
+            <p class="subtitle">Внимательно ознакомьтесь перед началом</p>
+            <div class="step"><span class="step-number">1</span><span>Разрешите доступ к камере.</span></div>
+            <div class="step"><span class="step-number">2</span><span>Смотрите на точки и кликайте по ним во время калибровки.</span></div>
+            <div class="step"><span class="step-number">3</span><span>После калибровки нажмите «Перейти к эксперименту».</span></div>
+            <div class="highlight-box"><p class="instruction-text"><strong>Важно:</strong> Не двигайте головой слишком резко.</p></div>
+            <div class="button-container">
+              <button class="btn btn-calibrate" onclick="startCalibrationProcess()">Начать калибровку</button>
+            </div>
+          </div>
+
+          <div id="calibration-section" class="calibration-container">
+            <h2>Калибровка системы отслеживания взгляда</h2>
+            <div class="calibration-info">
+              <h3>Как проводить калибровку:</h3>
+              <ul>
+                <li>На экране появятся <strong>9 точек</strong> в разных местах</li>
+                <li><strong>Смотрите на точку</strong> и кликайте по ней</li>
+                <li>Выполните <strong>2 раунда</strong></li>
+              </ul>
+            </div>
+            <div class="status" id="calibration-status"></div>
+            <div class="progress-bar"><div class="progress-fill" id="calibration-progress">0 / 18</div></div>
+            <div class="button-container">
+              <button class="btn btn-calibrate" id="start-calibration-btn" onclick="startWebGazerCalibration()" disabled>Начать калибровку точек</button>
+              <button class="btn btn-start" id="proceed-btn" onclick="proceedToExperiment()">Перейти к эксперименту</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1210,16 +1280,20 @@
     let lastSample = 0;
     let lastScrollSample = 0;
 
-    function setCalibrationStatus(message) {
-      const el = document.getElementById('calibration-status');
-      if (el) el.textContent = message;
+    function showStatus(message, type) {
+      const statusEl = document.getElementById('calibration-status');
+      if (!statusEl) return;
+      statusEl.textContent = message;
+      statusEl.className = 'status ' + type;
+      statusEl.style.display = 'block';
     }
 
-    function updateCalibrationProgress(current) {
-      const fill = document.getElementById('calibration-progress-fill');
-      if (!fill) return;
-      const total = totalCalibrationPoints * totalCalibrationRounds;
-      fill.style.width = `${(current / total) * 100}%`;
+    function updateProgress(current, total) {
+      const progressEl = document.getElementById('calibration-progress');
+      if (!progressEl) return;
+      const percentage = (current / total) * 100;
+      progressEl.style.width = percentage + '%';
+      progressEl.textContent = current + ' / ' + total;
     }
 
     function renderCalibrationRound() {
@@ -1245,13 +1319,14 @@
           webgazer.recordScreenPosition(x, y, 'click');
           point.remove();
           currentCalibrationPoint += 1;
-          updateCalibrationProgress(currentCalibrationPoint);
+          updateProgress(currentCalibrationPoint, totalCalibrationPoints * totalCalibrationRounds);
 
           const total = totalCalibrationPoints * totalCalibrationRounds;
           if (currentCalibrationPoint >= total) {
             calibrationComplete = true;
-            setCalibrationStatus('✅ Калибровка завершена. Нажмите "Начать эксперимент"');
-            document.getElementById('enter-experiment').style.display = 'inline-block';
+            showStatus('✅ Калибровка завершена. Нажмите "Перейти к эксперименту"', 'success');
+            const btn = document.getElementById('proceed-btn');
+            if (btn) btn.style.display = 'inline-block';
             return;
           }
 
@@ -1263,19 +1338,30 @@
       });
     }
 
-    async function startCalibrationFlow() {
+    async function startCalibrationProcess() {
       if (calibrationStarted) return;
       calibrationStarted = true;
-      setCalibrationStatus('⏳ Инициализация камеры...');
-      document.getElementById('start-calibration-flow').disabled = true;
+      document.getElementById('instruction-section').style.display = 'none';
+      document.getElementById('calibration-section').style.display = 'block';
+      showStatus('⏳ Инициализация камеры...', 'warning');
       try {
         await startWebgazer();
-        setCalibrationStatus('✅ Камера активна. Нажмите "Начать точки"');
-        document.getElementById('start-points').disabled = false;
+        showStatus('✅ Камера активна. Нажмите "Начать калибровку точек"', 'success');
+        document.getElementById('start-calibration-btn').disabled = false;
       } catch (error) {
         console.error('❌ Не удалось запустить WebGazer:', error);
-        setCalibrationStatus('❌ Ошибка запуска камеры. Перезагрузите страницу и попробуйте снова.');
+        showStatus('❌ Ошибка запуска камеры. Перезагрузите страницу и попробуйте снова.', 'warning');
+        calibrationStarted = false;
       }
+    }
+
+    function startWebGazerCalibration() {
+      if (!calibrationStarted) return;
+      currentCalibrationPoint = 0;
+      updateProgress(0, totalCalibrationPoints * totalCalibrationRounds);
+      showStatus('👀 Кликайте по точкам (2 раунда)', 'warning');
+      document.getElementById('start-calibration-btn').disabled = true;
+      renderCalibrationRound();
     }
 
     function activateExperimentCollection() {
@@ -1316,29 +1402,25 @@
       }, { passive: true });
     }
 
+    function proceedToExperiment() {
+      if (!calibrationComplete) {
+        showStatus('Сначала завершите калибровку!', 'warning');
+        return;
+      }
+      document.querySelectorAll('.calibration-point').forEach((el) => el.remove());
+      const overlay = document.getElementById('intro-overlay');
+      if (overlay) overlay.style.display = 'none';
+      activateExperimentCollection();
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
       if (!window.webgazer) {
-        setCalibrationStatus('❌ WebGazer не загрузился.');
+        showStatus('❌ WebGazer не загрузился.', 'warning');
         return;
       }
 
       window._participantId = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
-
-      document.getElementById('start-calibration-flow').addEventListener('click', startCalibrationFlow);
-      document.getElementById('start-points').addEventListener('click', function () {
-        currentCalibrationPoint = 0;
-        updateCalibrationProgress(0);
-        setCalibrationStatus('👀 Кликайте по точкам (2 раунда)');
-        renderCalibrationRound();
-      });
-      document.getElementById('enter-experiment').addEventListener('click', function () {
-        if (!calibrationComplete) return;
-        document.querySelectorAll('.calibration-point').forEach((el) => el.remove());
-        const overlay = document.getElementById('intro-overlay');
-        if (overlay) overlay.style.display = 'none';
-        activateExperimentCollection();
-      });
     });
 
     // ── Вызывается при нажатии "Перейти к оформлению" ───────────────
