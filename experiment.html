@@ -1107,6 +1107,8 @@
     const SAMPLE_RATE_MS = 33; // точка каждые ~33 мс ≈ 30 точек/сек
     const SCROLL_SAMPLE_RATE_MS = 50; // записываем скролл до 20 раз/сек
     const BANNER_AOI_PADDING_PX = 0; // дополнительная зона AOI вокруг баннера
+    const WEBGAZER_TRACKER = 'clmtrackr';
+    const WEBGAZER_REGRESSION = 'ridge';
 
     window._bannerRectViewport = null;
     window._bannerRectPage = null;
@@ -1189,6 +1191,17 @@
         .showPredictionPoints(false)
         .applyKalmanFilter(true);
 
+      try {
+        if (typeof webgazer.setRegression === 'function') {
+          webgazer.setRegression(WEBGAZER_REGRESSION);
+        }
+        if (typeof webgazer.setTracker === 'function') {
+          webgazer.setTracker(WEBGAZER_TRACKER);
+        }
+      } catch (configError) {
+        console.warn('⚠️ Не удалось применить конфигурацию tracker/regression:', configError);
+      }
+
       if (window._webgazerStarted) {
         return Promise.resolve(true);
       }
@@ -1202,7 +1215,7 @@
           return true;
         })
         .catch(function (error) {
-          console.error('❌ Ошибка запуска WebGazer во время ' + stageLabel + ':', error);
+          console.error('❌ Ошибка запуска WebGazer во время ' + stageLabel + ' (tracker=' + WEBGAZER_TRACKER + '):', error);
           return false;
         });
     }
