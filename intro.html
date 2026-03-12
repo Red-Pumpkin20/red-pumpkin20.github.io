@@ -363,8 +363,15 @@
         const totalCalibrationPoints = 9;
         const totalCalibrationRounds = 2;
         const calibrationDwellMs = 500;
-        const CALIBRATION_DATA_KEY = 'wgCalibrationDataV1';
         let currentCalibrationRound = 1;
+
+        function isDebugMode() {
+            try {
+                return new URLSearchParams(window.location.search).get('wg_debug') === '1';
+            } catch (_) {
+                return false;
+            }
+        }
 
         function showStatus(message, type) {
             const statusEl = document.getElementById('calibration-status');
@@ -405,27 +412,6 @@
             });
         }
 
-        function persistCalibrationData() {
-            try {
-                const regression = webgazer.getRegression && webgazer.getRegression()[0];
-                const data = regression && regression.getData ? regression.getData() : [];
-                if (!Array.isArray(data) || data.length === 0) {
-                    showStatus('❌ Калибровка не сохранилась. Повторите калибровку.', 'warning');
-                    return false;
-                }
-
-                const payload = JSON.stringify(data);
-                sessionStorage.setItem(CALIBRATION_DATA_KEY, payload);
-                localStorage.setItem(CALIBRATION_DATA_KEY, payload);
-                console.log('💾 Калибровка сохранена. Точек регрессии:', data.length);
-                return true;
-            } catch (error) {
-                console.error('❌ Ошибка сохранения калибровки:', error);
-                showStatus('❌ Ошибка сохранения калибровки. Повторите попытку.', 'warning');
-                return false;
-            }
-        }
-
         function startCalibrationProcess() {
             document.getElementById('instruction-section').style.display = 'none';
             document.getElementById('calibration-section').style.display = 'block';
@@ -450,7 +436,9 @@
 
             // БЕЗ gaze listener - он не нужен для калибровки!
             Promise.resolve(webgazer.begin()).then(() => {
-                keepWebgazerVideoHiddenButSized();
+                if (!isDebugMode()) {
+                    keepWebgazerVideoHiddenButSized();
+                }
                 // Отключаем штатные mousemove-листенеры WebGazer, чтобы калибровка шла только по кликам.
                 if (typeof webgazer.removeMouseEventListeners === 'function') {
                     webgazer.removeMouseEventListeners();
@@ -463,7 +451,9 @@
             });
 
             // Держим video-feed невидимым, но с ненулевым размером (нужно для стабильной работы FaceMesh)
-            setTimeout(keepWebgazerVideoHiddenButSized, 100);
+            if (!isDebugMode()) {
+                setTimeout(keepWebgazerVideoHiddenButSized, 100);
+            }
 
         }
 
@@ -551,11 +541,6 @@
 
             showStatus('Калибровка (2 раунда) завершена успешно!', 'success');
 
-            if (!persistCalibrationData()) {
-                calibrationComplete = false;
-                return;
-            }
-
             document.getElementById('proceed-btn').style.display = 'inline-block';
             document.getElementById('start-calibration-btn').textContent = 'Повторить калибровку';
             document.getElementById('start-calibration-btn').disabled = false;
@@ -572,19 +557,7 @@
             window.location.href = 'experiment.html';
         }
 
-        window.addEventListener('beforeunload', function() {
-            if (typeof webgazer !== 'undefined') {
-                const container = document.getElementById('webgazerVideoContainer');
-                const gazeDot = document.getElementById('webgazerGazeDot');
-                if (container && gazeDot) {
-                    try {
-                        webgazer.end();
-                    } catch (error) {
-                        console.warn('⚠️ Игнорируем ошибку webgazer.end() при выгрузке страницы:', error);
-                    }
-                }
-            }
-        });
+        // Не вызываем webgazer.end() на переходе между страницами — это может ронять pipeline в ряде браузеров.
     </script>
 
 </body>
