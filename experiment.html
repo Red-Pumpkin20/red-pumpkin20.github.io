@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="format-detection" content="telephone=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="author" content="">
     <meta name="keywords" content="">
     <meta name="description" content="">
@@ -1174,14 +1175,41 @@
       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
+    function ensureWebGazerStarted(stageLabel) {
+      if (!window.webgazer) {
+        console.error('❌ WebGazer не загрузился');
+        return Promise.resolve(false);
+      }
+
+      webgazer
+        .saveDataAcrossSessions(true)
+        .showVideoPreview(false)
+        .showFaceOverlay(false)
+        .showFaceFeedbackBox(false)
+        .showPredictionPoints(false)
+        .applyKalmanFilter(true);
+
+      if (window._webgazerStarted) {
+        return Promise.resolve(true);
+      }
+
+      return Promise.resolve(webgazer.begin())
+        .then(function () {
+          window._webgazerStarted = true;
+          if (typeof webgazer.removeMouseEventListeners === 'function') {
+            webgazer.removeMouseEventListeners();
+          }
+          return true;
+        })
+        .catch(function (error) {
+          console.error('❌ Ошибка запуска WebGazer во время ' + stageLabel + ':', error);
+          return false;
+        });
+    }
+
     function initExperimentTracking() {
       if (window._trackingInitialized) return;
       window._trackingInitialized = true;
-
-      if (!window.webgazer) {
-        console.error('❌ WebGazer не загрузился');
-        return;
-      }
 
       // Уникальный ID участника
       window._participantId  = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
@@ -1208,59 +1236,47 @@
         recordScrollEvent('scroll');
       }, { passive: true });
 
-      console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
+      webgazer.setGazeListener(function (data) {
+        if (!data) return;
+        const now = Date.now();
+        if (now - lastSample < SAMPLE_RATE_MS) return;
+        lastSample = now;
+        const view = getViewportMetrics();
+        updateBannerRect();
+        const point = {
+          x: Math.round(data.x),
+          y: Math.round(data.y),
+          t: now - window._sessionStart,
+          page_x: Math.round(data.x + view.scroll_x),
+          page_y: Math.round(data.y + view.scroll_y),
+          scroll_x: view.scroll_x,
+          scroll_y: view.scroll_y,
+          viewport_w: view.viewport_w,
+          viewport_h: view.viewport_h,
+          doc_w: view.doc_w,
+          doc_h: view.doc_h,
+          dpr: view.dpr
+        };
 
-      webgazer
-        // Загружаем калибровку из intro.html через штатное хранилище WebGazer
-        .saveDataAcrossSessions(true)
-        .showVideoPreview(false)
-        .showFaceOverlay(false)
-        .showFaceFeedbackBox(false)
-        .showPredictionPoints(false)
-        .applyKalmanFilter(true)
-        .setGazeListener(function (data) {
-          if (!data) return;
-          const now = Date.now();
-          if (now - lastSample < SAMPLE_RATE_MS) return;
-          lastSample = now;
-          const view = getViewportMetrics();
-          updateBannerRect();
-          const point = {
-            x: Math.round(data.x),
-            y: Math.round(data.y),
-            t: now - window._sessionStart,
-            page_x: Math.round(data.x + view.scroll_x),
-            page_y: Math.round(data.y + view.scroll_y),
-            scroll_x: view.scroll_x,
-            scroll_y: view.scroll_y,
-            viewport_w: view.viewport_w,
-            viewport_h: view.viewport_h,
-            doc_w: view.doc_w,
-            doc_h: view.doc_h,
-            dpr: view.dpr
-          };
+        point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
+        point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
+        point.on_banner = point.on_banner_viewport || point.on_banner_page;
+        if (point.on_banner) {
+          window._bannerHits++;
+        }
 
-          point.on_banner_viewport = isPointInsideBannerViewport(point.x, point.y);
-          point.on_banner_page = isPointInsideBannerPage(point.page_x, point.page_y);
-          point.on_banner = point.on_banner_viewport || point.on_banner_page;
-          if (point.on_banner) {
-            window._bannerHits++;
-          }
+        window._gazePoints.push(point);
+        if (window._gazePoints.length % 100 === 0)
+          console.log('📊 Точек собрано:', window._gazePoints.length);
+      });
 
-          window._gazePoints.push(point);
-          if (window._gazePoints.length % 100 === 0)
-            console.log('📊 Точек собрано:', window._gazePoints.length);
-        })
-        .begin()
-        .then(function () {
-          // Полностью отключаем обучение по мыши (click/move listeners)
-          if (typeof webgazer.removeMouseEventListeners === 'function') {
-            webgazer.removeMouseEventListeners();
-          }
-        })
-        .catch(function (error) {
-          console.error('❌ Ошибка запуска WebGazer:', error);
-        });
+      ensureWebGazerStarted('эксперимента').then(function (started) {
+        if (!started) {
+          window._trackingInitialized = false;
+          return;
+        }
+        console.log('🎯 WebGazer запущен. ID участника:', window._participantId);
+      });
     }
 
     let calibrationStarted = false;
@@ -1291,19 +1307,15 @@
       document.getElementById('calibration-section').style.display = 'block';
       showStatus('⏳ Инициализация камеры...', 'warning');
       document.getElementById('start-calibration-btn').disabled = true;
-      webgazer.saveDataAcrossSessions(true);
-      Promise.resolve(webgazer.begin()).then(() => {
-        if (typeof webgazer.removeMouseEventListeners === 'function') {
-          webgazer.removeMouseEventListeners();
-        }
-        document.getElementById('start-calibration-btn').disabled = false;
-        showStatus('✅ Камера активна! Нажмите "Начать калибровку точек"', 'success');
-      }).catch((error) => {
-        console.error('❌ Ошибка запуска WebGazer во время калибровки:', error);
-        document.getElementById('start-calibration-btn').disabled = false;
-      });
 
-      webgazer.showVideoPreview(false).showFaceOverlay(false).showFaceFeedbackBox(false).showPredictionPoints(false).applyKalmanFilter(true);
+      ensureWebGazerStarted('калибровки').then((started) => {
+        document.getElementById('start-calibration-btn').disabled = false;
+        if (!started) {
+          showStatus('❌ Не удалось запустить камеру. Проверьте доступ к камере и обновите страницу.', 'warning');
+          return;
+        }
+        showStatus('✅ Камера активна! Нажмите "Начать калибровку точек"', 'success');
+      });
     }
 
     function startWebGazerCalibration() {
