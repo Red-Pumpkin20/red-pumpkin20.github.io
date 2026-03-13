@@ -55,7 +55,17 @@
                 total: size
               };
             } else {
+              if (!Module.dataFileDownloads) Module.dataFileDownloads = {};
+              if (!Module.dataFileDownloads[url]) {
+                Module.dataFileDownloads[url] = {
+                  loaded: 0,
+                  total: size
+                };
+              }
               Module.dataFileDownloads[url].loaded = event.loaded;
+              if (!Module.dataFileDownloads[url].total) {
+                Module.dataFileDownloads[url].total = size;
+              }
             }
             var total = 0;
             var loaded = 0;
