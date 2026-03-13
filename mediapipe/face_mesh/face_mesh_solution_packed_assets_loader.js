@@ -45,28 +45,40 @@
         xhr.onprogress = function(event) {
           var url = packageName;
           var size = packageSize;
+          var downloads = Module.dataFileDownloads || (Module.dataFileDownloads = {});
           if (event.total) size = event.total;
           if (event.loaded) {
             if (!xhr.addedTotal) {
               xhr.addedTotal = true;
-              if (!Module.dataFileDownloads) Module.dataFileDownloads = {};
-              Module.dataFileDownloads[url] = {
+              downloads[url] = {
                 loaded: event.loaded,
                 total: size
               };
             } else {
-              Module.dataFileDownloads[url].loaded = event.loaded;
+              if (!downloads[url]) {
+                downloads[url] = {
+                  loaded: 0,
+                  total: size
+                };
+              }
+              downloads[url].loaded = event.loaded;
+              if (!downloads[url].total) {
+                downloads[url].total = size;
+              }
             }
             var total = 0;
             var loaded = 0;
             var num = 0;
-            for (var download in Module.dataFileDownloads) {
-            var data = Module.dataFileDownloads[download];
-              total += data.total;
-              loaded += data.loaded;
+            for (var download in downloads) {
+              var data = downloads[download];
+              if (!data) continue;
+              total += data.total || 0;
+              loaded += data.loaded || 0;
               num++;
             }
-            total = Math.ceil(total * Module.expectedDataFileDownloads/num);
+            if (num > 0) {
+              total = Math.ceil(total * Module.expectedDataFileDownloads/num);
+            }
             if (Module['setStatus']) Module['setStatus']('Downloading data... (' + loaded + '/' + total + ')');
           } else if (!Module.dataFileDownloads) {
             if (Module['setStatus']) Module['setStatus']('Downloading data...');
