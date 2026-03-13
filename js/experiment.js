@@ -80,6 +80,13 @@
       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
+    function applyGazeListener() {
+      if (!window.webgazer || typeof window.webgazer.setGazeListener !== 'function' || !window._handleGazeData) return;
+      window.webgazer.setGazeListener(function (data) {
+        window._handleGazeData(data);
+      });
+    }
+
     function ensureWebGazerStarted(stageLabel) {
       if (!window.webgazer) {
         console.error('❌ WebGazer не загрузился');
@@ -106,12 +113,14 @@
       }
 
       if (window._webgazerStarted) {
+        applyGazeListener();
         return Promise.resolve(true);
       }
 
       return Promise.resolve(webgazer.begin())
         .then(function () {
           window._webgazerStarted = true;
+          applyGazeListener();
           if (typeof webgazer.removeMouseEventListeners === 'function') {
             webgazer.removeMouseEventListeners();
           }
@@ -152,7 +161,7 @@
         recordScrollEvent('scroll');
       }, { passive: true });
 
-      webgazer.setGazeListener(function (data) {
+      window._handleGazeData = function (data) {
         if (!data) return;
         const now = Date.now();
         if (now - lastSample < SAMPLE_RATE_MS) return;
@@ -182,9 +191,23 @@
         }
 
         window._gazePoints.push(point);
-        if (window._gazePoints.length % 100 === 0)
+        if (window._gazePoints.length === 1 || window._gazePoints.length % 100 === 0) {
           console.log('📊 Точек собрано:', window._gazePoints.length);
-      });
+        }
+      };
+
+      applyGazeListener();
+
+      if (window._gazePollingId) {
+        clearInterval(window._gazePollingId);
+      }
+      window._gazePollingId = setInterval(function () {
+        if (!window.webgazer || typeof window.webgazer.getCurrentPrediction !== 'function') return;
+        const prediction = window.webgazer.getCurrentPrediction();
+        if (prediction) {
+          window._handleGazeData(prediction);
+        }
+      }, SAMPLE_RATE_MS);
 
       ensureWebGazerStarted('эксперимента').then(function (started) {
         if (!started) {
@@ -374,6 +397,9 @@
       const participantId = window._participantId || 'unknown';
 
       console.log('🏁 Эксперимент завершён. Точек: ' + gazePoints.length);
+      if (gazePoints.length === 0) {
+        console.warn('⚠️ Не собрано ни одной точки взгляда. Проверьте, что лицо в кадре, и повторите калибровку.');
+      }
 
       recordScrollEvent('finish');
 
@@ -391,7 +417,8 @@
         banner_rect_page: JSON.stringify(window._bannerRectPage || {}),
         banner_hits: window._bannerHits || 0,
         gaze_data: JSON.stringify(gazePoints),
-        send_reason: 'checkout'
+        send_reason: 'checkout',
+        collection_mode: 'listener+polling-fallback'
       };
 
       const jsonPayload = {
@@ -408,7 +435,8 @@
         banner_rect_page: window._bannerRectPage || {},
         banner_hits: window._bannerHits || 0,
         gaze_data: gazePoints,
-        send_reason: 'checkout'
+        send_reason: 'checkout',
+        collection_mode: 'listener+polling-fallback'
       };
 
       try {
@@ -443,3 +471,9 @@
         btn.textContent = 'Перейти к оформлению';
       }
     }
+
+    window.addEventListener('beforeunload', function () {
+      if (window._gazePollingId) {
+        clearInterval(window._gazePollingId);
+      }
+    });
